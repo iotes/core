@@ -1,6 +1,6 @@
 import {
     DeviceDispatchable, HostDispatchable, HostConnectionType,
-    CreateDeviceDispatchable, CreateHostDispatchable,
+    CreateDeviceDispatchable, CreateHostDispatchable, ErrorDispatchable,
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = <
@@ -9,6 +9,7 @@ export const createDeviceDispatchable: CreateDeviceDispatchable = <
         name: string,
         type: Types,
         payload: Payload,
+        error?: ErrorDispatchable,
     ): DeviceDispatchable<Payload> => ({
         [name]: {
             type,
@@ -18,6 +19,7 @@ export const createDeviceDispatchable: CreateDeviceDispatchable = <
                 host: '',
             },
             payload,
+            error: error || null,
         },
     })
 
@@ -27,11 +29,13 @@ export const createHostDispatchable: CreateHostDispatchable = <
         name: string,
         type: HostConnectionType,
         payload: Payload,
+        error?: ErrorDispatchable,
     ): HostDispatchable<Payload> => ({
         [name]: {
             type,
             name,
             meta: {},
             payload,
+            error: error || null,
         },
     })

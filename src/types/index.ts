@@ -97,10 +97,7 @@ export type State = { [key: string]: {[key: string] : any} }
 
 export type Dispatchable = State | Error
 
-export type ErrorDispatchable = {
-    isError?: boolean,
-    error?: { message: string, code?: string, level: LogLevel }
-}
+export type ErrorDispatchable = { message: string, code?: string, level: LogLevel }
 
 /**
    * Defines the form of dispatchable object for communication with a device
@@ -112,7 +109,8 @@ export type DeviceDispatchable<
     type: string,
     meta?: {[key: string]: any }
     payload: Payload
-} & ErrorDispatchable }
+    error?: ErrorDispatchable
+}}
 
 /**
    * Defines the form of dispatchable object for communication with a device
@@ -126,7 +124,8 @@ export type HostDispatchable<Payload = any> = { [name: string] : {
     name: string
     meta?: {[key: string]: string | number}
     payload: Payload
-} & ErrorDispatchable }
+    error?: ErrorDispatchable
+}}
 
 export type Subscription = (state: State) => any
 
