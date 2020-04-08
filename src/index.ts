@@ -16,15 +16,15 @@ import {
     createHostDispatchable,
 } from './utils'
 
-const insertMetadata = (
-    dispatchable: HostDispatchable | DeviceDispatchable,
+const insertMetadata = <Payload extends { [key: string]: any }>(
+    dispatchable: HostDispatchable | DeviceDispatchable<Payload>,
     meta: {[key: string]: string | number},
 ) => (
-    Object.keys(dispatchable).reduce((a, key) => ({
-        ...a,
-        [key]: { ...dispatchable[key], ...meta },
-    }), {})
-)
+        Object.keys(dispatchable).reduce((a, key) => ({
+            ...a,
+            [key]: { ...dispatchable[key], ...meta },
+        }), {})
+    )
 
 
 const createIotes: CreateIotes = ({
@@ -70,7 +70,9 @@ const createIotes: CreateIotes = ({
             const hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Host' })
             host$.dispatch(hostDispatchable)
         },
-        deviceDispatch: (dispatchable: DeviceDispatchable) => {
+        deviceDispatch: <Payload extends {[key: string] : any}>(
+            dispatchable: DeviceDispatchable<Payload>,
+        ) => {
             env.logger.info(`Device dispatch recieved ${JSON.stringify(dispatchable, null, 2)}`)
             const deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Device' })
             device$.dispatch(deviceDispatchable)

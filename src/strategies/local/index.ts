@@ -35,26 +35,28 @@ const createHostDispatchable = (
 const createDeviceFactory = async <StrategyConfig> (
     hostConfig: HostConfig<StrategyConfig>,
     client: ClientConfig,
-    deviceDispatch: (dispatchable: DeviceDispatchable) => void,
+    deviceDispatch: <Payload extends {
+      [key: string]: any
+    } >(dispatchable: DeviceDispatchable<Payload>) => void,
     deviceSubscribe: any,
     store: Store,
 ): Promise<DeviceFactory<DeviceTypes>> => {
-    const createDeviceDispatchable = (
+    const createDeviceDispatchable = <Payload extends { [key: string]: any } >(
         type: string,
         deviceName: string,
-        payload: { [key: string]: any },
-    ): DeviceDispatchable => ({
-        [deviceName]: {
-            type,
-            name: deviceName,
-            meta: {
-                timestamp: Date.now().toString(),
-                channel: 2,
-                host: hostConfig.name,
+        payload: Payload,
+    ): DeviceDispatchable<Payload> => ({
+            [deviceName]: {
+                type,
+                name: deviceName,
+                meta: {
+                    timestamp: Date.now().toString(),
+                    channel: 2,
+                    host: hostConfig.name,
+                },
+                payload,
             },
-            payload,
-        },
-    })
+        })
 
     // RFID READER
     const createRfidReader = async (device: DeviceConfig<'RFID_READER'>) => {

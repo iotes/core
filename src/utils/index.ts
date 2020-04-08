@@ -4,11 +4,11 @@ import {
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = <
-Types extends string = string, Payload = any
+  Types extends string = string, Payload extends {[key: string]: any} = {}
 >(
         name: string,
         type: Types,
-        payload = {},
+        payload: Payload,
     ): DeviceDispatchable<Payload> => ({
         [name]: {
             type,
@@ -21,11 +21,13 @@ Types extends string = string, Payload = any
         },
     })
 
-export const createHostDispatchable: CreateHostDispatchable = <Payload = any>(
-    name: string,
-    type: HostConnectionType,
-    payload = {},
-): HostDispatchable<Payload> => ({
+export const createHostDispatchable: CreateHostDispatchable = <
+    Payload extends {[key: string]: any} = {}
+> (
+        name: string,
+        type: HostConnectionType,
+        payload: Payload,
+    ): HostDispatchable<Payload> => ({
         [name]: {
             type,
             name,

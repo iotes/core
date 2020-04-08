@@ -105,11 +105,13 @@ export type ErrorDispatchable = {
 /**
    * Defines the form of dispatchable object for communication with a device
    */
-export type DeviceDispatchable<Payload = any> = {[name: string] : {
+export type DeviceDispatchable<
+  Payload extends {[key: string]: any }
+> = {[name: string] : {
     name: string,
     type: string,
-    meta?: {[key: string]: string | number}
-    payload: {[key: string]: Payload}
+    meta?: {[key: string]: any }
+    payload: Payload
 } & ErrorDispatchable }
 
 /**
@@ -123,7 +125,7 @@ export type HostDispatchable<Payload = any> = { [name: string] : {
     type: HostConnectionType
     name: string
     meta?: {[key: string]: string | number}
-    payload: {[key: string]: Payload}
+    payload: Payload
 } & ErrorDispatchable }
 
 export type Subscription = (state: State) => any
@@ -166,8 +168,12 @@ export type Strategy<StrategyConfig, DeviceTypes extends string> = (
    * @param hostSubscribe: Subscribes to the device bus
    */
 export type Iotes = {
-    hostDispatch: (dispatchable: HostDispatchable) => void
-    deviceDispatch: (dispatchable: DeviceDispatchable) => void
+    hostDispatch: <Payload extends {[key: string]: any}>(
+        dispatchable: HostDispatchable<Payload>
+    ) => void
+    deviceDispatch: <Payload extends {[key: string]: any}>(
+        dispatchable: DeviceDispatchable<Payload>
+    ) => void
     hostSubscribe: (subscription: Subscription, selector?: Selector) => void
     deviceSubscribe: (subscription: Subscription, selector?: Selector) => void
 }
@@ -181,20 +187,20 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
 }) => Iotes
 
 export type CreateHostDispatchable = <
-  Payload = any
+    Payload extends {[key: string]: any } = {}
 >(
-  name: string,
-  type: HostConnectionType,
-  payload: Payload,
+    name: string,
+    type: HostConnectionType,
+    payload: Payload,
 ) => HostDispatchable<Payload>
 
 export type CreateDeviceDispatchable = <
-  DeviceDispatchableType extends string = string,
-  Payload = any
+    DeviceDispatchableType extends string = string,
+    Payload extends {[key: string]: any } = {}
 >(
-  name: string,
-  type: DeviceDispatchableType,
-  payload: Payload,
+    name: string,
+    type: DeviceDispatchableType,
+    payload: Payload,
 ) => DeviceDispatchable<Payload>
 
 declare const createIotes: CreateIotes
