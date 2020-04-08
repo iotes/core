@@ -204,7 +204,7 @@ export type CreateDeviceDispatchable = <
 ) => DeviceDispatchable<Payload>
 
 declare const createIotes: CreateIotes
-declare const createDeviceDipatchable: CreateDeviceDispatchable
+declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
 
-export { createIotes, createDeviceDipatchable, createHostDispatchable }
+export { createIotes, createDeviceDispatchable, createHostDispatchable }
