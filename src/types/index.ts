@@ -186,20 +186,26 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
 }) => Iotes
 
 export type CreateHostDispatchable = <
-    Payload extends {[key: string]: any } = {}
+    Payload extends {[key: string]: any } = {},
+    Meta extends {[key: string]: any} = {}
 >(
     name: string,
     type: HostConnectionType,
     payload: Payload,
+    meta?: Meta,
+    error?: ErrorDispatchable
 ) => HostDispatchable<Payload>
 
 export type CreateDeviceDispatchable = <
     DeviceDispatchableType extends string = string,
-    Payload extends {[key: string]: any } = {}
+    Payload extends {[key: string]: any } = {},
+    Meta extends {[key: string]: any} = {},
 >(
     name: string,
     type: DeviceDispatchableType,
     payload: Payload,
+    meta?: Meta,
+    error?: ErrorDispatchable
 ) => DeviceDispatchable<Payload>
 
 declare const createIotes: CreateIotes

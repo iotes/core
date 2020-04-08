@@ -4,38 +4,40 @@ import {
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = <
-  Types extends string = string, Payload extends {[key: string]: any} = {}
+  Types extends string = string,
+  Payload extends {[key: string]: any} = {},
+  Meta extends {[key: string]: any} = {}
 >(
         name: string,
         type: Types,
         payload: Payload,
+        meta?: Meta,
         error?: ErrorDispatchable,
     ): DeviceDispatchable<Payload> => ({
         [name]: {
             type,
             name,
-            meta: {
-                timestamp: Date.now().toString(),
-                host: '',
-            },
             payload,
+            meta,
             error: error || null,
         },
     })
 
 export const createHostDispatchable: CreateHostDispatchable = <
-    Payload extends {[key: string]: any} = {}
+    Payload extends {[key: string]: any} = {},
+    Meta extends {[key: string]: any} = {}
 > (
         name: string,
         type: HostConnectionType,
         payload: Payload,
+        meta?: Meta,
         error?: ErrorDispatchable,
     ): HostDispatchable<Payload> => ({
         [name]: {
             type,
             name,
-            meta: {},
             payload,
+            meta,
             error: error || null,
         },
     })
