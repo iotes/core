@@ -14,6 +14,7 @@ import {
 import {
     createDeviceDispatchable,
     createHostDispatchable,
+    loopbackGuard,
 } from './utils'
 
 const insertMetadata = <Payload extends { [key: string]: any }>(
@@ -84,4 +85,5 @@ export {
     createIotes,
     createDeviceDispatchable,
     createHostDispatchable,
+    loopbackGuard,
 }

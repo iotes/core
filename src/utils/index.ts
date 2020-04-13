@@ -1,6 +1,7 @@
 import {
     DeviceDispatchable, HostDispatchable, HostConnectionType,
     CreateDeviceDispatchable, CreateHostDispatchable, ErrorDispatchable,
+    LoopbackGuard,
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = <
@@ -42,11 +43,8 @@ export const createHostDispatchable: CreateHostDispatchable = <
         },
     })
 
-export const loopbackGuard = (
-    deviceName: string,
-    state: {[key: string]: { [key: string]: unknown, '@@source': string } },
-    client: {[key: string]: unknown, name: string },
-    callback: (...args: any[]) => void,
+export const loopbackGuard: LoopbackGuard = (
+    deviceName, state, client, callback,
 ) => {
     if (state[deviceName] && state[deviceName]['@@source'] === client.name) {
         callback()

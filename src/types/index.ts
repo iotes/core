@@ -208,8 +208,18 @@ export type CreateDeviceDispatchable = <
     error?: ErrorDispatchable
 ) => DeviceDispatchable<Payload>
 
+export type LoopbackGuard = (
+    deviceName: string,
+    state: {[key: string]: { [key: string]: unknown, '@@source': string } },
+    client: {[key: string]: unknown, name: string },
+    callback: (...args: any[]) => void,
+) => void
+
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
+declare const loopbackGuard: LoopbackGuard
 
-export { createIotes, createDeviceDispatchable, createHostDispatchable }
+export {
+    createIotes, createDeviceDispatchable, createHostDispatchable, loopbackGuard,
+}
