@@ -11,6 +11,7 @@ import {
     ClientConfig,
     Iotes,
 } from '../../types'
+import { loopbackGuard } from '../../utils'
 import { createStore } from '../../store'
 
 type DeviceTypes = 'RFID_READER' | 'ROTARY_ENCODER'
@@ -83,9 +84,10 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            if (state[name] && state[name]['@@source'] === client.name) {
-                store.dispatch({ [name]: state[name] })
-            }
+            loopbackGuard(
+                name, state, client,
+                () => store.dispatch({ [name]: state[name] }),
+            )
         })
 
         // Register listeners

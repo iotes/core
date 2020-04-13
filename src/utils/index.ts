@@ -41,3 +41,14 @@ export const createHostDispatchable: CreateHostDispatchable = <
             error: error || null,
         },
     })
+
+export const loopbackGuard = (
+    deviceName: string,
+    state: {[key: string]: { [key: string]: unknown, '@@source': string } },
+    client: {[key: string]: unknown, name: string },
+    callback: (...args: any[]) => void,
+) => {
+    if (state[deviceName] && state[deviceName]['@@source'] === client.name) {
+        callback()
+    }
+}
