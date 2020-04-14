@@ -123,6 +123,7 @@ import { createIotes } from 'iotes'
 import { createMqttStrategy } from 'iotes-mqtt-strategy'
 
 const topologyMap= {
+    client: {name: 'test app'} 
     hosts: [
         host: 'ws://127.0.0.1', 
         port: '1883', 
