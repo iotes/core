@@ -1,7 +1,7 @@
 import { createStore } from './store'
 import { EnvironmentObject } from './environment'
 import { createLogger } from './logger'
-import { createIntegration } from './integration'
+import { createIntegration } from './integrate'
 import { identityPlugin } from './plugins/identity'
 
 import {
@@ -68,14 +68,14 @@ const createIotes: CreateIotes = ({
         // wrap dispatch with source value
         hostDispatch: (dispatchable: HostDispatchable) => {
             env.logger.info(`Host dispatch recieved ${dispatchable}`)
-            const hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Host' })
+            const hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Host' })
             host$.dispatch(hostDispatchable)
         },
         deviceDispatch: <Payload extends {[key: string] : any}>(
             dispatchable: DeviceDispatchable<Payload>,
         ) => {
             env.logger.info(`Device dispatch recieved ${JSON.stringify(dispatchable, null, 2)}`)
-            const deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Device' })
+            const deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Device' })
             device$.dispatch(deviceDispatchable)
         },
     })

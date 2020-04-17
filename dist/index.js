@@ -14,7 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var store_1 = require("./store");
 var environment_1 = require("./environment");
 var logger_1 = require("./logger");
-var integration_1 = require("./integration");
+var integrate_1 = require("./integrate");
 var identity_1 = require("./plugins/identity");
 var utils_1 = require("./utils");
 exports.createDeviceDispatchable = utils_1.createDeviceDispatchable;
@@ -33,7 +33,7 @@ var createIotes = function (_a) {
     environment_1.EnvironmentObject.stores = __assign(__assign({}, environment_1.EnvironmentObject.stores), { host$: store_1.createStore(), device$: store_1.createStore() });
     var _c = environment_1.EnvironmentObject.stores, host$ = _c.host$, device$ = _c.device$;
     try {
-        integration_1.createIntegration(strategy({
+        integrate_1.createIntegration(strategy({
             hostDispatch: host$.dispatch,
             deviceDispatch: device$.dispatch,
             hostSubscribe: host$.subscribe,
@@ -53,12 +53,12 @@ var createIotes = function (_a) {
         // wrap dispatch with source value
         hostDispatch: function (dispatchable) {
             env.logger.info("Host dispatch recieved " + dispatchable);
-            var hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Host' });
+            var hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Host' });
             host$.dispatch(hostDispatchable);
         },
         deviceDispatch: function (dispatchable) {
             env.logger.info("Device dispatch recieved " + JSON.stringify(dispatchable, null, 2));
-            var deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name, '@@bus': 'Device' });
+            var deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Device' });
             device$.dispatch(deviceDispatchable);
         },
     });

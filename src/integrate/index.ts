@@ -1,10 +1,8 @@
 import {
     HostConfig,
-    DeviceFactory,
     Integration,
     HostFactory,
     TopologyMap,
-    ClientConfig,
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
