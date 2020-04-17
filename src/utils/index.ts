@@ -46,7 +46,7 @@ export const createHostDispatchable: CreateHostDispatchable = <
 export const loopbackGuard: LoopbackGuard = (
     deviceName, state, client, callback,
 ) => {
-    if (state[deviceName] && state[deviceName]['@@source'] === client.name) {
+    if (state[deviceName] && state[deviceName]['@@source'] === client?.name) {
         callback()
     }
 }
