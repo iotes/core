@@ -122,7 +122,7 @@ The devices are connected to the host by the hostName field in the device config
 import { createIotes } from 'iotes'
 import { createMqttStrategy } from 'iotes-mqtt-strategy'
 
-const topologyMap= {
+const topologyMap = {
     client: {name: 'test app'} 
     hosts: [
         host: 'ws://127.0.0.1', 
