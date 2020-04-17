@@ -1,5 +1,4 @@
 npm run build
-npm run test
 npm version patch
 
 PACKAGE_VERSION=$(cat package.json \
