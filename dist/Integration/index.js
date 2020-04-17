@@ -76,7 +76,7 @@ exports.createIntegration = function (hostFactory, topologyMap) {
             logger.info("Creating device of type: " + device.type + " on " + device.hostName);
             return deviceFactoriesIndex[device.hostName][device.type](__assign(__assign({}, device), { client: client }))
                 .catch(function (error) {
-                console.warn("Failed to create Device " + device.name + ", details: " + error);
+                console.warn("Failed to create Device " + device.name + " on host " + device.hostName + ", details: " + error);
             });
         })).catch(function (err) {
             console.warn('Failed to create Devices one of more Devices from topology map. Check chosen strategy has a method to handle the device type you need');

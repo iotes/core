@@ -34,7 +34,7 @@ export const createIntegration: Integration = <StrategyConfig, DeviceTypes exten
                 logger.info(`Creating device of type: ${device.type} on ${device.hostName}`)
                 return deviceFactoriesIndex[device.hostName][device.type]({ ...device, client })
                     .catch((error: any) => {
-                        console.warn(`Failed to create Device ${device.name}, details: ${error}`)
+                        console.warn(`Failed to create Device ${device.name} on host ${device.hostName}, details: ${error}`)
                     })
             }),
         ).catch((err) => {
