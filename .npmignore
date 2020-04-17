@@ -3,3 +3,11 @@
 src
 tests
 __tests__
+tsconfig.json
+release.sh
+.eslintignore
+.eslintrc.js
+.gitignore
+bitbucket-pipelines.yml
+jest.config.js
+tslint.json
