@@ -25,8 +25,8 @@ exports.createHostDispatchable = function (name, type, payload, meta, error) {
         _a);
 };
 exports.loopbackGuard = function (deviceName, state, client, callback) {
-    var _a;
-    if (state[deviceName] && state[deviceName]['@@source'] === ((_a = client) === null || _a === void 0 ? void 0 : _a.name)) {
+    var _a, _b;
+    if (state[deviceName] && ((_a = state[deviceName]) === null || _a === void 0 ? void 0 : _a['@@source']) !== ((_b = client) === null || _b === void 0 ? void 0 : _b.name)) {
         callback();
     }
 };
