@@ -4,34 +4,16 @@ import {
     DeviceConfig,
     HostConfig,
     DeviceDispatchable,
-    HostDispatchable,
-    HostConnectionType,
     Strategy,
     Store,
     ClientConfig,
     Iotes,
 } from '../../types'
-import { loopbackGuard } from '../../utils'
+import { createDeviceDispatchable, createHostDispatchable } from '../../utils'
 import { createStore } from '../../store'
 
 type DeviceTypes = 'RFID_READER' | 'ROTARY_ENCODER'
 
-const createHostDispatchable = (
-    type: HostConnectionType,
-    name: string,
-    payload: { [key: string]: any } = {},
-): HostDispatchable => ({
-    [name]: {
-        type,
-        name,
-        meta: {
-            timestamp: Date.now().toString(),
-            channel: 2,
-            host: name,
-        },
-        payload,
-    },
-})
 
 const createDeviceFactory = async <StrategyConfig> (
     hostConfig: HostConfig<StrategyConfig>,
@@ -42,36 +24,26 @@ const createDeviceFactory = async <StrategyConfig> (
     deviceSubscribe: any,
     store: Store,
 ): Promise<DeviceFactory<DeviceTypes>> => {
-    const createDeviceDispatchable = <Payload extends { [key: string]: any } >(
-        type: string,
-        deviceName: string,
-        payload: Payload,
-    ): DeviceDispatchable<Payload> => ({
-            [deviceName]: {
-                type,
-                name: deviceName,
-                meta: {
-                    timestamp: Date.now().toString(),
-                    channel: 2,
-                    host: hostConfig.name,
-                },
-                payload,
-            },
-        })
-
     // RFID READER
     const createRfidReader = async (device: DeviceConfig<'RFID_READER'>) => {
         const { name, type } = device
 
+        // resigster trasmitter
         deviceSubscribe((state: any) => {
-            if (state[name] && state[name]['@@source'] === client.name) {
-                store.dispatch({ [name]: state[name] })
+            let newState: null
+            if (state[name]?.['@@storeId']) {
+                const { '@@storeId': none, ...ns } = state[name]
+                newState = ns
+            }
+
+            if (newState) {
+                store.dispatch({ [name]: newState })
             }
         })
 
         await setTimeout(() => {
             deviceDispatch(
-                createDeviceDispatchable(type, name, { value: Date.now() }),
+                createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }),
             )
         }, 10)
 
@@ -84,16 +56,22 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            loopbackGuard(
-                name, state, client,
-                () => store.dispatch({ [name]: state[name] }),
-            )
+            let newState: null
+            if (state[name]?.['@@storeId']) {
+                const { '@@storeId': none, ...ns } = state[name]
+                newState = ns
+            }
+
+            if (newState) {
+                store.dispatch({ [name]: newState })
+            }
         })
+
 
         // Register listeners
         await setTimeout(() => {
             deviceDispatch(
-                createDeviceDispatchable(type, name, { value: Date.now() }),
+                createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }),
             )
         }, 10)
 
@@ -128,7 +106,7 @@ export const createLocalStoreAndStrategy = (): [Store, Strategy<undefined, Devic
 
             hostSubscribe((state: any) => {
                 store$.dispatch(
-                    createHostDispatchable('CONNECT', hostConfig.name, {
+                    createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {
                         signal: 'test',
                     }),
                 )
@@ -138,7 +116,7 @@ export const createLocalStoreAndStrategy = (): [Store, Strategy<undefined, Devic
             await new Promise((res) => {
                 setTimeout(() => {
                     hostDispatch(
-                        createHostDispatchable('CONNECT', hostConfig.name),
+                        createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {}),
                     )
                     res()
                 }, 10)

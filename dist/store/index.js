@@ -19,11 +19,16 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var environment_1 = require("../environment");
-var createDefaultMetadata = function () { return ({
-    '@@timestamp': Date.now().toString(),
-}); };
+var createStoreId = function () { return "iotes_" + Math.random().toString(16).substr(2, 8); };
+var createDefaultMetadata = function () {
+    var storeId = createStoreId();
+    return function () { return ({
+        '@@timestamp': Date.now().toString(),
+        '@@storeId': storeId,
+    }); };
+};
 exports.createStore = function (metadata, errorHandler) {
-    if (metadata === void 0) { metadata = createDefaultMetadata; }
+    if (metadata === void 0) { metadata = createDefaultMetadata(); }
     var logger = environment_1.EnvironmentObject.logger;
     var state = {};
     var subscribers = [];
@@ -63,10 +68,14 @@ exports.createStore = function (metadata, errorHandler) {
     var unwrapDispatchable = function (dispatchable) {
         if (dispatchable instanceof Error)
             return [errorHandler(dispatchable, state), false];
-        if (isObjectLiteral(dispatchable)) {
-            var metaDispatchable = Object.keys(dispatchable).reduce(function (a, key) {
+        var deltaDispatchable = Object.keys(dispatchable).filter(function (key) { return (dispatchable[key] ? !dispatchable[key]['@@storeId'] : false); }).reduce(function (a, key) {
+            var _a;
+            return (__assign(__assign({}, a), (_a = {}, _a[key] = dispatchable[key], _a)));
+        }, {});
+        if (isObjectLiteral(deltaDispatchable)) {
+            var metaDispatchable = Object.keys(deltaDispatchable).reduce(function (a, key) {
                 var _a;
-                return (__assign(__assign({}, a), (_a = {}, _a[key] = __assign(__assign({}, dispatchable[key]), metadata()), _a)));
+                return (__assign(__assign({}, a), (_a = {}, _a[key] = __assign(__assign({}, deltaDispatchable[key]), metadata()), _a)));
             }, {});
             return [metaDispatchable, true];
         }
@@ -77,9 +86,9 @@ exports.createStore = function (metadata, errorHandler) {
         callback();
     };
     var dispatch = function (dispatchable) {
-        var _a = unwrapDispatchable(dispatchable), newState = _a[0], shouldUpdateState = _a[1];
+        var _a = unwrapDispatchable(dispatchable), unwrappedDispatchable = _a[0], shouldUpdateState = _a[1];
         if (shouldUpdateState)
-            setState(newState, updateSubscribers);
+            setState(unwrappedDispatchable, updateSubscribers);
     };
     return {
         dispatch: dispatch,

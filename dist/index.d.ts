@@ -1,4 +1,4 @@
 import { CreateIotes } from './types';
-import { createDeviceDispatchable, createHostDispatchable, loopbackGuard } from './utils';
+import { createDeviceDispatchable, createHostDispatchable } from './utils';
 declare const createIotes: CreateIotes;
-export { createIotes, createDeviceDispatchable, createHostDispatchable, loopbackGuard, };
+export { createIotes, createDeviceDispatchable, createHostDispatchable, };

@@ -4,49 +4,38 @@ import {
     LoopbackGuard,
 } from '../types'
 
-export const createDeviceDispatchable: CreateDeviceDispatchable = <
-  Types extends string = string,
-  Payload extends {[key: string]: any} = {},
-  Meta extends {[key: string]: any} = {}
->(
-        name: string,
-        type: Types,
-        payload: Payload,
-        meta?: Meta,
-        error?: ErrorDispatchable,
-    ): DeviceDispatchable<Payload> => ({
-        [name]: {
-            type,
-            name,
-            payload,
-            meta,
-            error: error || null,
-        },
-    })
+export const createDeviceDispatchable: CreateDeviceDispatchable = (
+    name, type, source, payload, meta = {}, error,
+) => ({
+    [name]: {
+        type,
+        name,
+        source,
+        payload,
+        meta,
+        error: error || null,
+    },
+})
 
-export const createHostDispatchable: CreateHostDispatchable = <
-    Payload extends {[key: string]: any} = {},
-    Meta extends {[key: string]: any} = {}
-> (
-        name: string,
-        type: HostConnectionType,
-        payload: Payload,
-        meta?: Meta,
-        error?: ErrorDispatchable,
-    ): HostDispatchable<Payload> => ({
-        [name]: {
-            type,
-            name,
-            payload,
-            meta,
-            error: error || null,
-        },
-    })
+export const createHostDispatchable: CreateHostDispatchable = (
+    name, type, source, payload, meta = {}, error,
+) => ({
+    [name]: {
+        type,
+        name,
+        source,
+        payload,
+        meta,
+        error: error || null,
+    },
+})
 
-export const loopbackGuard: LoopbackGuard = (
-    deviceName, state, client, callback,
-) => {
-    if (state[deviceName] && state[deviceName]?.['@@source'] !== client?.name) {
-        callback()
-    }
-}
+export const insertMetadata = <Payload extends { [key: string]: any }>(
+    dispatchable: HostDispatchable | DeviceDispatchable<Payload>,
+    meta: {[key: string]: string | number},
+) => (
+        Object.keys(dispatchable).reduce((a, key) => ({
+            ...a,
+            [key]: { ...dispatchable[key], ...meta },
+        }), {})
+    )

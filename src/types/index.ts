@@ -64,8 +64,9 @@ export type ClientConfig = {
 }
 
 // Store
-export type Metadata<Meta extends {[key: string]: string | number} = {
-  '@@timestamp': string
+export type Metadata<Meta extends {[key: string]: string | number | boolean} = {
+  '@@timestamp': string,
+  '@@storeId': string,
 }> = () => Meta
 
 
@@ -93,7 +94,7 @@ export interface Logger {
 export type LogLevel = 'SILENT' | 'INFO' | 'LOG' | 'WARN' | 'DEBUG' | 'ERROR'
 
 // Dispatchables
-export type State = { [key: string]: {[key: string] : any} }
+export type State = { [key: string]: {[key: string] : unknown } }
 
 export type Dispatchable = State | Error
 
@@ -107,6 +108,7 @@ export type DeviceDispatchable<
 > = {[name: string] : {
     name: string,
     type: string,
+    source: string,
     meta?: {[key: string]: any }
     payload: Payload
     error?: ErrorDispatchable
@@ -122,6 +124,7 @@ export type DeviceDispatchable<
 export type HostDispatchable<Payload = any> = { [name: string] : {
     type: HostConnectionType
     name: string
+    source: string,
     meta?: {[key: string]: string | number}
     payload: Payload
     error?: ErrorDispatchable
@@ -191,8 +194,9 @@ export type CreateHostDispatchable = <
 >(
     name: string,
     type: HostConnectionType,
+    source: string,
     payload: Payload,
-    meta?: Meta,
+    meta?: Meta | {},
     error?: ErrorDispatchable
 ) => HostDispatchable<Payload>
 
@@ -203,23 +207,23 @@ export type CreateDeviceDispatchable = <
 >(
     name: string,
     type: DeviceDispatchableType,
+    source: string,
     payload: Payload,
-    meta?: Meta,
-    error?: ErrorDispatchable
+    meta?: Meta | {},
+    error?: ErrorDispatchable,
 ) => DeviceDispatchable<Payload>
 
 export type LoopbackGuard = (
     deviceName: string,
-    state: {[key: string]: { [key: string]: unknown, '@@source': string } },
-    client: {[key: string]: unknown, name: string },
-    callback: (...args: any[]) => void,
+    state: State,
+    dispatchable: State,
+    callback: (...args: any[]) => void
 ) => void
 
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
-declare const loopbackGuard: LoopbackGuard
 
 export {
-    createIotes, createDeviceDispatchable, createHostDispatchable, loopbackGuard,
+    createIotes, createDeviceDispatchable, createHostDispatchable,
 }

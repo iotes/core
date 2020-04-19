@@ -9,12 +9,19 @@ import {
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
-const createDefaultMetadata: Metadata = () => ({
-    '@@timestamp': Date.now().toString(),
-})
+const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
+
+const createDefaultMetadata = (): Metadata => {
+    const storeId = createStoreId()
+
+    return () => ({
+        '@@timestamp': Date.now().toString(),
+        '@@storeId': storeId,
+    })
+}
 
 export const createStore = (
-    metadata: Metadata = createDefaultMetadata,
+    metadata: Metadata = createDefaultMetadata(),
     errorHandler?: (error: Error, currentState?: State) => State,
 ): Store => {
     const { logger } = EnvironmentObject
@@ -74,13 +81,22 @@ export const createStore = (
 
     const unwrapDispatchable = (dispatchable: Dispatchable): [State, ShouldUpdateState] => {
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
-        if (isObjectLiteral(dispatchable)) {
-            const metaDispatchable = Object.keys(dispatchable).reduce((a, key) => (
-                { ...a, [key]: { ...dispatchable[key], ...metadata() } }
+
+        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => (
+            dispatchable[key] ? !dispatchable[key]['@@storeId'] : false
+        )).reduce(
+            (a, key) => ({ ...a, [key]: dispatchable[key] }), {},
+        )
+
+
+        if (isObjectLiteral(deltaDispatchable)) {
+            const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (
+                { ...a, [key]: { ...deltaDispatchable[key], ...metadata() } }
             ), {})
 
             return [metaDispatchable, true]
         }
+
         return [{}, false]
     }
 
@@ -90,8 +106,9 @@ export const createStore = (
     }
 
     const dispatch = (dispatchable: Dispatchable) => {
-        const [newState, shouldUpdateState] = unwrapDispatchable(dispatchable)
-        if (shouldUpdateState) setState(newState, updateSubscribers)
+        const [unwrappedDispatchable, shouldUpdateState] = unwrapDispatchable(dispatchable)
+
+        if (shouldUpdateState) setState(unwrappedDispatchable, updateSubscribers)
     }
 
     return {

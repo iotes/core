@@ -19,11 +19,6 @@ var identity_1 = require("./plugins/identity");
 var utils_1 = require("./utils");
 exports.createDeviceDispatchable = utils_1.createDeviceDispatchable;
 exports.createHostDispatchable = utils_1.createHostDispatchable;
-exports.loopbackGuard = utils_1.loopbackGuard;
-var insertMetadata = function (dispatchable, meta) { return (Object.keys(dispatchable).reduce(function (a, key) {
-    var _a;
-    return (__assign(__assign({}, a), (_a = {}, _a[key] = __assign(__assign({}, dispatchable[key]), meta), _a)));
-}, {})); };
 var createIotes = function (_a) {
     var topology = _a.topology, strategy = _a.strategy, _b = _a.plugin, plugin = _b === void 0 ? identity_1.identityPlugin : _b, logLevel = _a.logLevel, logger = _a.logger;
     // Set up logger
@@ -53,12 +48,12 @@ var createIotes = function (_a) {
         // wrap dispatch with source value
         hostDispatch: function (dispatchable) {
             env.logger.info("Host dispatch recieved " + dispatchable);
-            var hostDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Host' });
+            var hostDispatchable = utils_1.insertMetadata(dispatchable, { '@@busChannel': 'HOST' });
             host$.dispatch(hostDispatchable);
         },
         deviceDispatch: function (dispatchable) {
             env.logger.info("Device dispatch recieved " + JSON.stringify(dispatchable, null, 2));
-            var deviceDispatchable = insertMetadata(dispatchable, { '@@source': client.name || 'client', '@@bus': 'Device' });
+            var deviceDispatchable = utils_1.insertMetadata(dispatchable, { '@@busChannel': 'DEVICE' });
             device$.dispatch(deviceDispatchable);
         },
     });

@@ -35,57 +35,44 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("../../utils");
 var store_1 = require("../../store");
-var createHostDispatchable = function (type, name, payload) {
-    var _a;
-    if (payload === void 0) { payload = {}; }
-    return (_a = {},
-        _a[name] = {
-            type: type,
-            name: name,
-            meta: {
-                timestamp: Date.now().toString(),
-                channel: 2,
-                host: name,
-            },
-            payload: payload,
-        },
-        _a);
-};
 var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSubscribe, store) { return __awaiter(void 0, void 0, void 0, function () {
-    var createDeviceDispatchable, createRfidReader, createRotaryEncoder;
+    var createRfidReader, createRotaryEncoder;
     return __generator(this, function (_a) {
-        createDeviceDispatchable = function (type, deviceName, payload) {
-            var _a;
-            return (_a = {},
-                _a[deviceName] = {
-                    type: type,
-                    name: deviceName,
-                    meta: {
-                        timestamp: Date.now().toString(),
-                        channel: 2,
-                        host: hostConfig.name,
-                    },
-                    payload: payload,
-                },
-                _a);
-        };
         createRfidReader = function (device) { return __awaiter(void 0, void 0, void 0, function () {
             var name, type;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         name = device.name, type = device.type;
+                        // resigster trasmitter
                         deviceSubscribe(function (state) {
                             var _a;
-                            if (state[name] && state[name]['@@source'] === client.name) {
-                                store.dispatch((_a = {}, _a[name] = state[name], _a));
+                            var _b;
+                            var newState;
+                            if ((_b = state[name]) === null || _b === void 0 ? void 0 : _b['@@storeId']) {
+                                var _c = state[name], none = _c["@@storeId"], ns = __rest(_c, ['@@storeId']);
+                                newState = ns;
+                            }
+                            if (newState) {
+                                store.dispatch((_a = {}, _a[name] = newState, _a));
                             }
                         });
                         return [4 /*yield*/, setTimeout(function () {
-                                deviceDispatch(createDeviceDispatchable(type, name, { value: Date.now() }));
+                                deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
                             }, 10)];
                     case 1:
                         _a.sent();
@@ -101,14 +88,20 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
                         type = device.type, name = device.name;
                         // resigster trasmitter
                         deviceSubscribe(function (state) {
-                            utils_1.loopbackGuard(name, state, client, function () {
-                                var _a;
-                                return store.dispatch((_a = {}, _a[name] = state[name], _a));
-                            });
+                            var _a;
+                            var _b;
+                            var newState;
+                            if ((_b = state[name]) === null || _b === void 0 ? void 0 : _b['@@storeId']) {
+                                var _c = state[name], none = _c["@@storeId"], ns = __rest(_c, ['@@storeId']);
+                                newState = ns;
+                            }
+                            if (newState) {
+                                store.dispatch((_a = {}, _a[name] = newState, _a));
+                            }
                         });
                         // Register listeners
                         return [4 /*yield*/, setTimeout(function () {
-                                deviceDispatch(createDeviceDispatchable(type, name, { value: Date.now() }));
+                                deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
                             }, 10)];
                     case 1:
                         // Register listeners
@@ -135,14 +128,14 @@ exports.createLocalStoreAndStrategy = function () {
                         name = clientConfig.name;
                         hostDispatch = I.hostDispatch, deviceDispatch = I.deviceDispatch, hostSubscribe = I.hostSubscribe, deviceSubscribe = I.deviceSubscribe;
                         hostSubscribe(function (state) {
-                            store$.dispatch(createHostDispatchable('CONNECT', hostConfig.name, {
+                            store$.dispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {
                                 signal: 'test',
                             }));
                         });
                         // Test host dispatch
                         return [4 /*yield*/, new Promise(function (res) {
                                 setTimeout(function () {
-                                    hostDispatch(createHostDispatchable('CONNECT', hostConfig.name));
+                                    hostDispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {}));
                                     res();
                                 }, 10);
                             })];
