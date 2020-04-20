@@ -1,7 +1,6 @@
 import {
-    DeviceDispatchable, HostDispatchable, HostConnectionType,
-    CreateDeviceDispatchable, CreateHostDispatchable, ErrorDispatchable,
-    LoopbackGuard,
+    DeviceDispatchable, HostDispatchable,
+    CreateDeviceDispatchable, CreateHostDispatchable,
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = (

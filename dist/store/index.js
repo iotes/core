@@ -27,8 +27,8 @@ var createDefaultMetadata = function () {
         '@@storeId': storeId,
     }); };
 };
-exports.createStore = function (metadata, errorHandler) {
-    if (metadata === void 0) { metadata = createDefaultMetadata(); }
+exports.createStore = function (errorHandler) {
+    var metadata = createDefaultMetadata();
     var logger = environment_1.EnvironmentObject.logger;
     var state = {};
     var subscribers = [];

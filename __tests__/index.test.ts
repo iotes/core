@@ -121,13 +121,14 @@ describe('Store module ', () => {
         })
     })
 
-    test('Loopback is guarded againsr', () => {
+    test('Loopback is guarded against', () => {
         let result: any = null
         localStore.subscribe((state) => { result = state })
 
-        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', 'test', { sample: 'test' }))
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', 'test', { signal: 'test' }))
+        localStore.dispatch({ ...result['reader/1'], sample: 'newTest' })
 
-        // console.log(result)
+        expect(result['reader/1'].payload).toEqual({ signal: 'test' })
     })
 })
 

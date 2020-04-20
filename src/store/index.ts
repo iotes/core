@@ -21,9 +21,10 @@ const createDefaultMetadata = (): Metadata => {
 }
 
 export const createStore = (
-    metadata: Metadata = createDefaultMetadata(),
     errorHandler?: (error: Error, currentState?: State) => State,
 ): Store => {
+    const metadata = createDefaultMetadata()
+
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
 

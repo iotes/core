@@ -49,6 +49,15 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("../../utils");
 var store_1 = require("../../store");
+var defeatLoopbackGuard = function (deviceName, state) {
+    var _a;
+    var newState;
+    if ((_a = state[deviceName]) === null || _a === void 0 ? void 0 : _a['@@storeId']) {
+        var _b = state[deviceName], n = _b["@@storeId"], ns = __rest(_b, ['@@storeId']);
+        newState = ns;
+    }
+    return newState || state;
+};
 var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSubscribe, store) { return __awaiter(void 0, void 0, void 0, function () {
     var createRfidReader, createRotaryEncoder;
     return __generator(this, function (_a) {
@@ -61,15 +70,11 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
                         // resigster trasmitter
                         deviceSubscribe(function (state) {
                             var _a;
-                            var _b;
-                            var newState;
-                            if ((_b = state[name]) === null || _b === void 0 ? void 0 : _b['@@storeId']) {
-                                var _c = state[name], none = _c["@@storeId"], ns = __rest(_c, ['@@storeId']);
-                                newState = ns;
-                            }
-                            if (newState) {
-                                store.dispatch((_a = {}, _a[name] = newState, _a));
-                            }
+                            var _b, _c;
+                            store.dispatch((_a = {},
+                                _a[name] = ((_c = (_b = state[name]) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.defeatLoopbackGuard) ? state
+                                    : defeatLoopbackGuard(name, state),
+                                _a));
                         });
                         return [4 /*yield*/, setTimeout(function () {
                                 deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
@@ -89,15 +94,11 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
                         // resigster trasmitter
                         deviceSubscribe(function (state) {
                             var _a;
-                            var _b;
-                            var newState;
-                            if ((_b = state[name]) === null || _b === void 0 ? void 0 : _b['@@storeId']) {
-                                var _c = state[name], none = _c["@@storeId"], ns = __rest(_c, ['@@storeId']);
-                                newState = ns;
-                            }
-                            if (newState) {
-                                store.dispatch((_a = {}, _a[name] = newState, _a));
-                            }
+                            var _b, _c;
+                            store.dispatch((_a = {},
+                                _a[name] = ((_c = (_b = state[name]) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.defeatLoopbackGuard) ? state
+                                    : defeatLoopbackGuard(name, state),
+                                _a));
                         });
                         // Register listeners
                         return [4 /*yield*/, setTimeout(function () {

@@ -8,11 +8,22 @@ import {
     Store,
     ClientConfig,
     Iotes,
+    State,
 } from '../../types'
 import { createDeviceDispatchable, createHostDispatchable } from '../../utils'
 import { createStore } from '../../store'
 
 type DeviceTypes = 'RFID_READER' | 'ROTARY_ENCODER'
+
+const defeatLoopbackGuard = (deviceName: string, state: State): State => {
+    let newState: {} | null
+    if (state[deviceName]?.['@@storeId']) {
+        const { '@@storeId': n, ...ns } = state[deviceName]
+        newState = ns
+    }
+
+    return newState || state
+}
 
 
 const createDeviceFactory = async <StrategyConfig> (
@@ -30,15 +41,12 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            let newState: null
-            if (state[name]?.['@@storeId']) {
-                const { '@@storeId': none, ...ns } = state[name]
-                newState = ns
-            }
-
-            if (newState) {
-                store.dispatch({ [name]: newState })
-            }
+            store.dispatch({
+                [name]:
+                state[name]?.payload?.defeatLoopbackGuard
+                    ? state
+                    : defeatLoopbackGuard(name, state),
+            })
         })
 
         await setTimeout(() => {
@@ -56,15 +64,12 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            let newState: null
-            if (state[name]?.['@@storeId']) {
-                const { '@@storeId': none, ...ns } = state[name]
-                newState = ns
-            }
-
-            if (newState) {
-                store.dispatch({ [name]: newState })
-            }
+            store.dispatch({
+                [name]:
+                state[name]?.payload?.defeatLoopbackGuard
+                    ? state
+                    : defeatLoopbackGuard(name, state),
+            })
         })
 
 
