@@ -9,6 +9,8 @@ import {
     ClientConfig,
     Iotes,
     State,
+    Selector,
+    Subscription,
 } from '../../types'
 import { createDeviceDispatchable, createHostDispatchable } from '../../utils'
 import { createStore } from '../../store'
@@ -47,7 +49,7 @@ const createDeviceFactory = async <StrategyConfig> (
                     ? state
                     : defeatLoopbackGuard(name, state),
             })
-        })
+        }, [name])
 
         await setTimeout(() => {
             deviceDispatch(
@@ -64,21 +66,19 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            store.dispatch({
-                [name]:
-                state[name]?.payload?.defeatLoopbackGuard
-                    ? state
-                    : defeatLoopbackGuard(name, state),
-            })
-        })
+            const rm = state[name]
+            store.dispatch(createDeviceDispatchable(name, rm.type, rm.source, rm.payload))
+        }, [name])
 
 
         // Register listeners
+        /*
         await setTimeout(() => {
             deviceDispatch(
                 createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }),
             )
         }, 10)
+        */
 
         return device
     }

@@ -1,6 +1,6 @@
 {
   "name": "iotes",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "A javascript library for intergrating iot services with modern front end state management tools",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",

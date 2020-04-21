@@ -221,9 +221,25 @@ describe('Strategy implementation ', () => {
             rej()
         }, 100))
 
-        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'RFID_READER', 'tests', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', 'tests', { signal: 'test' }))
 
         expect(result[deviceName]).toHaveProperty('@@busChannel')
+    })
+
+    test('Selectors work as expected', async () => {
+        let result: number = 0
+        localStore.subscribe((state) => {
+            result += 1
+        }, ['ENCODER/1'])
+
+        await new Promise((res, rej) => setTimeout(() => {
+            res()
+        }, 10))
+
+        localModule.deviceDispatch(createDeviceDispatchable('READER/1', 'READER/1', 'tests', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable('ENCODER/1', 'ENCODER/1', 'tests', { signal: 'test' }))
+
+        expect(result).toBe(1)
     })
 
     test('App dispatched to Integration host correctly', async () => {

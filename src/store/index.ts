@@ -42,20 +42,23 @@ export const createStore = (
             selector: string,
         ) => (
             state[selector]
-                ? { ...a, ...state[selector] }
+                ? { ...a, [selector]: state[selector] }
                 : a
         ),
         {})
     )
 
-    const updateSubscribers = () => {
+    const updateSubscribers = (newState: State) => {
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
         subscribers.forEach((subscriber: Subscriber) => {
             const [subscription, selector] = subscriber
-            const stateSelection = selector ? applySelectors(selector) : state
-            if (Object.keys(stateSelection).length !== 0) subscription(stateSelection)
+            const shouldUpdate: boolean = selector ? !!selector.filter((s) => newState[s])[0] : true
+            if (!shouldUpdate) return
 
-            subscription(state)
+            const stateSelection = selector ? applySelectors(selector) : state
+            if (Object.keys(stateSelection).length !== 0) {
+                subscription(stateSelection)
+            }
         })
     }
 
@@ -109,7 +112,7 @@ export const createStore = (
     const dispatch = (dispatchable: Dispatchable) => {
         const [unwrappedDispatchable, shouldUpdateState] = unwrapDispatchable(dispatchable)
 
-        if (shouldUpdateState) setState(unwrappedDispatchable, updateSubscribers)
+        if (shouldUpdateState) setState(unwrappedDispatchable, () => updateSubscribers(unwrappedDispatchable))
     }
 
     return {
