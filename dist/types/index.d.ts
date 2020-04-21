@@ -48,8 +48,8 @@ export declare type ClientConfig = {
 export declare type Metadata<Meta extends {
     [key: string]: string | number | boolean;
 } = {
-    '@@timestamp': string;
-    '@@storeId': string;
+    '@@iotes_timestamp': string;
+    '@@iotes_storeId': string;
 }> = () => Meta;
 export declare type Integration = <StrategyConfig, DeviceTypes extends string>(hostFactory: HostFactory<StrategyConfig, DeviceTypes>, topologyMap: TopologyMap<StrategyConfig, DeviceTypes>) => void;
 export declare type PhidgetReactConfig = {
@@ -85,11 +85,11 @@ export declare type DeviceDispatchable<Payload extends {
     [name: string]: {
         name: string;
         type: string;
-        source: string;
+        payload: Payload;
         meta?: {
             [key: string]: any;
         };
-        payload: Payload;
+        source?: string;
         error?: ErrorDispatchable;
     };
 };
@@ -104,11 +104,11 @@ export declare type HostDispatchable<Payload = any> = {
     [name: string]: {
         type: HostConnectionType;
         name: string;
-        source: string;
+        payload: Payload;
         meta?: {
             [key: string]: string | number;
         };
-        payload: Payload;
+        source?: string;
         error?: ErrorDispatchable;
     };
 };
@@ -159,12 +159,12 @@ export declare type CreateHostDispatchable = <Payload extends {
     [key: string]: any;
 } = {}, Meta extends {
     [key: string]: any;
-} = {}>(name: string, type: HostConnectionType, source: string, payload: Payload, meta?: Meta | {}, error?: ErrorDispatchable) => HostDispatchable<Payload>;
+} = {}>(name: string, type: HostConnectionType, payload: Payload, meta?: Meta | {}, source?: string, error?: ErrorDispatchable) => HostDispatchable<Payload>;
 export declare type CreateDeviceDispatchable = <DeviceDispatchableType extends string = string, Payload extends {
     [key: string]: any;
 } = {}, Meta extends {
     [key: string]: any;
-} = {}>(name: string, type: DeviceDispatchableType, source: string, payload: Payload, meta?: Meta | {}, error?: ErrorDispatchable) => DeviceDispatchable<Payload>;
+} = {}>(name: string, type: DeviceDispatchableType, payload: Payload, meta?: Meta | {}, source?: string, error?: ErrorDispatchable) => DeviceDispatchable<Payload>;
 export declare type LoopbackGuard = (deviceName: string, state: State, dispatchable: State, callback: (...args: any[]) => void) => void;
 declare const createIotes: CreateIotes;
 declare const createDeviceDispatchable: CreateDeviceDispatchable;

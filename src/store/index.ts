@@ -15,8 +15,8 @@ const createDefaultMetadata = (): Metadata => {
     const storeId = createStoreId()
 
     return () => ({
-        '@@timestamp': Date.now().toString(),
-        '@@storeId': storeId,
+        '@@iotes_timestamp': Date.now().toString(),
+        '@@iotes_storeId': storeId,
     })
 }
 
@@ -87,7 +87,7 @@ export const createStore = (
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
 
         const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => (
-            dispatchable[key] ? !dispatchable[key]['@@storeId'] : false
+            dispatchable[key] ? !dispatchable[key]['@@iotes_storeId'] : false
         )).reduce(
             (a, key) => ({ ...a, [key]: dispatchable[key] }), {},
         )

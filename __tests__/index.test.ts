@@ -101,9 +101,9 @@ describe('Store module ', () => {
         let result: any = null
         localStore.subscribe((state) => { result = state })
 
-        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', 'app', { sample: 'test' }, { timestamp: '1234', host: 'local' }))
-        localStore.dispatch(createDeviceDispatchable('reader/2', 'RFID_READER', 'app', { sample: 'test' }, { timestamp: '1234', host: 'local' }))
-        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', 'app', { sample: 'newTest' }, { timestamp: '1234', host: 'local' }))
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', { sample: 'test' }, { timestamp: '1234', host: 'local' }))
+        localStore.dispatch(createDeviceDispatchable('reader/2', 'RFID_READER', { sample: 'test' }, { timestamp: '1234', host: 'local' }))
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', { sample: 'newTest' }, { timestamp: '1234', host: 'local' }))
 
         expect(result).toMatchObject({
             'reader/1': {
@@ -125,7 +125,7 @@ describe('Store module ', () => {
         let result: any = null
         localStore.subscribe((state) => { result = state })
 
-        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', 'test', { signal: 'test' }))
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', { signal: 'test' }))
         localStore.dispatch({ ...result['reader/1'], sample: 'newTest' })
 
         expect(result['reader/1'].payload).toEqual({ signal: 'test' })
@@ -204,7 +204,7 @@ describe('Strategy implementation ', () => {
         }, 100))
 
 
-        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'RFID_READER', 'tests', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'RFID_READER', { signal: 'test' }))
 
         expect(result[deviceName].payload).toEqual({ signal: 'test' })
     })
@@ -221,7 +221,7 @@ describe('Strategy implementation ', () => {
             rej()
         }, 100))
 
-        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', 'tests', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', { signal: 'test' }))
 
         expect(result[deviceName]).toHaveProperty('@@busChannel')
     })
@@ -236,8 +236,8 @@ describe('Strategy implementation ', () => {
             res()
         }, 10))
 
-        localModule.deviceDispatch(createDeviceDispatchable('READER/1', 'READER/1', 'tests', { signal: 'test' }))
-        localModule.deviceDispatch(createDeviceDispatchable('ENCODER/1', 'ENCODER/1', 'tests', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable('READER/1', 'READER/1', { signal: 'test' }))
+        localModule.deviceDispatch(createDeviceDispatchable('ENCODER/1', 'ENCODER/1', { signal: 'test' }))
 
         expect(result).toBe(1)
     })

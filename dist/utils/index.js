@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createDeviceDispatchable = function (name, type, source, payload, meta, error) {
+exports.createDeviceDispatchable = function (name, type, payload, meta, source, error) {
     var _a;
     if (meta === void 0) { meta = {}; }
     return (_a = {},
@@ -25,7 +25,7 @@ exports.createDeviceDispatchable = function (name, type, source, payload, meta, 
         },
         _a);
 };
-exports.createHostDispatchable = function (name, type, source, payload, meta, error) {
+exports.createHostDispatchable = function (name, type, payload, meta, source, error) {
     var _a;
     if (meta === void 0) { meta = {}; }
     return (_a = {},

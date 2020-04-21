@@ -65,8 +65,8 @@ export type ClientConfig = {
 
 // Store
 export type Metadata<Meta extends {[key: string]: string | number | boolean} = {
-  '@@timestamp': string,
-  '@@storeId': string,
+  '@@iotes_timestamp': string,
+  '@@iotes_storeId': string,
 }> = () => Meta
 
 
@@ -108,9 +108,9 @@ export type DeviceDispatchable<
 > = {[name: string] : {
     name: string,
     type: string,
-    source: string,
-    meta?: {[key: string]: any }
     payload: Payload
+    meta?: {[key: string]: any }
+    source?: string,
     error?: ErrorDispatchable
 }}
 
@@ -124,9 +124,9 @@ export type DeviceDispatchable<
 export type HostDispatchable<Payload = any> = { [name: string] : {
     type: HostConnectionType
     name: string
-    source: string,
-    meta?: {[key: string]: string | number}
     payload: Payload
+    meta?: {[key: string]: string | number}
+    source?: string,
     error?: ErrorDispatchable
 }}
 
@@ -194,9 +194,9 @@ export type CreateHostDispatchable = <
 >(
     name: string,
     type: HostConnectionType,
-    source: string,
     payload: Payload,
     meta?: Meta | {},
+    source?: string,
     error?: ErrorDispatchable
 ) => HostDispatchable<Payload>
 
@@ -207,9 +207,9 @@ export type CreateDeviceDispatchable = <
 >(
     name: string,
     type: DeviceDispatchableType,
-    source: string,
     payload: Payload,
     meta?: Meta | {},
+    source?: string,
     error?: ErrorDispatchable,
 ) => DeviceDispatchable<Payload>
 

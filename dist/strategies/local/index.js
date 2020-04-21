@@ -52,8 +52,8 @@ var store_1 = require("../../store");
 var defeatLoopbackGuard = function (deviceName, state) {
     var _a;
     var newState;
-    if ((_a = state[deviceName]) === null || _a === void 0 ? void 0 : _a['@@storeId']) {
-        var _b = state[deviceName], n = _b["@@storeId"], ns = __rest(_b, ['@@storeId']);
+    if ((_a = state[deviceName]) === null || _a === void 0 ? void 0 : _a['@@iotes_storeId']) {
+        var _b = state[deviceName], n = _b["@@iotes_storeId"], ns = __rest(_b, ['@@iotes_storeId']);
         newState = ns;
     }
     return newState || state;
@@ -77,7 +77,7 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
                                 _a));
                         }, [name]);
                         return [4 /*yield*/, setTimeout(function () {
-                                deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
+                                deviceDispatch(utils_1.createDeviceDispatchable(name, type, { value: Date.now() }));
                             }, 10)];
                     case 1:
                         _a.sent();
@@ -123,14 +123,14 @@ exports.createLocalStoreAndStrategy = function () {
                         name = clientConfig.name;
                         hostDispatch = I.hostDispatch, deviceDispatch = I.deviceDispatch, hostSubscribe = I.hostSubscribe, deviceSubscribe = I.deviceSubscribe;
                         hostSubscribe(function (state) {
-                            store$.dispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {
+                            store$.dispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', {
                                 signal: 'test',
                             }));
                         });
                         // Test host dispatch
                         return [4 /*yield*/, new Promise(function (res) {
                                 setTimeout(function () {
-                                    hostDispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {}));
+                                    hostDispatch(utils_1.createHostDispatchable(hostConfig.name, 'CONNECT', {}));
                                     res();
                                 }, 10);
                             })];

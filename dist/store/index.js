@@ -23,8 +23,8 @@ var createStoreId = function () { return "iotes_" + Math.random().toString(16).s
 var createDefaultMetadata = function () {
     var storeId = createStoreId();
     return function () { return ({
-        '@@timestamp': Date.now().toString(),
-        '@@storeId': storeId,
+        '@@iotes_timestamp': Date.now().toString(),
+        '@@iotes_storeId': storeId,
     }); };
 };
 exports.createStore = function (errorHandler) {
@@ -74,7 +74,7 @@ exports.createStore = function (errorHandler) {
     var unwrapDispatchable = function (dispatchable) {
         if (dispatchable instanceof Error)
             return [errorHandler(dispatchable, state), false];
-        var deltaDispatchable = Object.keys(dispatchable).filter(function (key) { return (dispatchable[key] ? !dispatchable[key]['@@storeId'] : false); }).reduce(function (a, key) {
+        var deltaDispatchable = Object.keys(dispatchable).filter(function (key) { return (dispatchable[key] ? !dispatchable[key]['@@iotes_storeId'] : false); }).reduce(function (a, key) {
             var _a;
             return (__assign(__assign({}, a), (_a = {}, _a[key] = dispatchable[key], _a)));
         }, {});

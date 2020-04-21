@@ -19,8 +19,8 @@ type DeviceTypes = 'RFID_READER' | 'ROTARY_ENCODER'
 
 const defeatLoopbackGuard = (deviceName: string, state: State): State => {
     let newState: {} | null
-    if (state[deviceName]?.['@@storeId']) {
-        const { '@@storeId': n, ...ns } = state[deviceName]
+    if (state[deviceName]?.['@@iotes_storeId']) {
+        const { '@@iotes_storeId': n, ...ns } = state[deviceName]
         newState = ns
     }
 
@@ -53,7 +53,7 @@ const createDeviceFactory = async <StrategyConfig> (
 
         await setTimeout(() => {
             deviceDispatch(
-                createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }),
+                createDeviceDispatchable(name, type, { value: Date.now() }),
             )
         }, 10)
 
@@ -111,7 +111,7 @@ export const createLocalStoreAndStrategy = (): [Store, Strategy<undefined, Devic
 
             hostSubscribe((state: any) => {
                 store$.dispatch(
-                    createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {
+                    createHostDispatchable(hostConfig.name, 'CONNECT', {
                         signal: 'test',
                     }),
                 )
@@ -121,7 +121,7 @@ export const createLocalStoreAndStrategy = (): [Store, Strategy<undefined, Devic
             await new Promise((res) => {
                 setTimeout(() => {
                     hostDispatch(
-                        createHostDispatchable(hostConfig.name, 'CONNECT', 'LOCAL', {}),
+                        createHostDispatchable(hostConfig.name, 'CONNECT', {}),
                     )
                     res()
                 }, 10)

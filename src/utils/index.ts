@@ -4,7 +4,7 @@ import {
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = (
-    name, type, source, payload, meta = {}, error,
+    name, type, payload, meta = {}, source, error,
 ) => ({
     [name]: {
         type,
@@ -17,7 +17,7 @@ export const createDeviceDispatchable: CreateDeviceDispatchable = (
 })
 
 export const createHostDispatchable: CreateHostDispatchable = (
-    name, type, source, payload, meta = {}, error,
+    name, type, payload, meta = {}, source, error,
 ) => ({
     [name]: {
         type,
