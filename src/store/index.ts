@@ -112,7 +112,9 @@ export const createStore = (
     const dispatch = (dispatchable: Dispatchable) => {
         const [unwrappedDispatchable, shouldUpdateState] = unwrapDispatchable(dispatchable)
 
-        if (shouldUpdateState) setState(unwrappedDispatchable, () => updateSubscribers(unwrappedDispatchable))
+        if (shouldUpdateState) {
+            setState(unwrappedDispatchable, () => { updateSubscribers(unwrappedDispatchable) })
+        }
     }
 
     return {

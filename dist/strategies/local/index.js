@@ -75,7 +75,7 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
                                 _a[name] = ((_c = (_b = state[name]) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.defeatLoopbackGuard) ? state
                                     : defeatLoopbackGuard(name, state),
                                 _a));
-                        });
+                        }, [name]);
                         return [4 /*yield*/, setTimeout(function () {
                                 deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
                             }, 10)];
@@ -88,27 +88,21 @@ var createDeviceFactory = function (hostConfig, client, deviceDispatch, deviceSu
         createRotaryEncoder = function (device) { return __awaiter(void 0, void 0, void 0, function () {
             var type, name;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        type = device.type, name = device.name;
-                        // resigster trasmitter
-                        deviceSubscribe(function (state) {
-                            var _a;
-                            var _b, _c;
-                            store.dispatch((_a = {},
-                                _a[name] = ((_c = (_b = state[name]) === null || _b === void 0 ? void 0 : _b.payload) === null || _c === void 0 ? void 0 : _c.defeatLoopbackGuard) ? state
-                                    : defeatLoopbackGuard(name, state),
-                                _a));
-                        });
-                        // Register listeners
-                        return [4 /*yield*/, setTimeout(function () {
-                                deviceDispatch(utils_1.createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }));
-                            }, 10)];
-                    case 1:
-                        // Register listeners
-                        _a.sent();
-                        return [2 /*return*/, device];
-                }
+                type = device.type, name = device.name;
+                // resigster trasmitter
+                deviceSubscribe(function (state) {
+                    var rm = state[name];
+                    store.dispatch(utils_1.createDeviceDispatchable(name, rm.type, rm.source, rm.payload));
+                }, [name]);
+                // Register listeners
+                /*
+                await setTimeout(() => {
+                    deviceDispatch(
+                        createDeviceDispatchable(name, type, 'EXTERNAL', { value: Date.now() }),
+                    )
+                }, 10)
+                */
+                return [2 /*return*/, device];
             });
         }); };
         return [2 /*return*/, {

@@ -36,16 +36,22 @@ exports.createStore = function (errorHandler) {
         var subscriber = [subscription, selector];
         subscribers = __spreadArrays(subscribers, [subscriber]);
     };
-    var applySelectors = function (selectors) { return (selectors.reduce(function (a, selector) { return (state[selector]
-        ? __assign(__assign({}, a), state[selector]) : a); }, {})); };
-    var updateSubscribers = function () {
+    var applySelectors = function (selectors) { return (selectors.reduce(function (a, selector) {
+        var _a;
+        return (state[selector]
+            ? __assign(__assign({}, a), (_a = {}, _a[selector] = state[selector], _a)) : a);
+    }, {})); };
+    var updateSubscribers = function (newState) {
         logger.log("Subscriber to receive state: " + JSON.stringify(state, null, 2));
         subscribers.forEach(function (subscriber) {
             var subscription = subscriber[0], selector = subscriber[1];
+            var shouldUpdate = selector ? !!selector.filter(function (s) { return newState[s]; })[0] : true;
+            if (!shouldUpdate)
+                return;
             var stateSelection = selector ? applySelectors(selector) : state;
-            if (Object.keys(stateSelection).length !== 0)
+            if (Object.keys(stateSelection).length !== 0) {
                 subscription(stateSelection);
-            subscription(state);
+            }
         });
     };
     var isObjectLiteral = function (testCase) {
@@ -87,8 +93,9 @@ exports.createStore = function (errorHandler) {
     };
     var dispatch = function (dispatchable) {
         var _a = unwrapDispatchable(dispatchable), unwrappedDispatchable = _a[0], shouldUpdateState = _a[1];
-        if (shouldUpdateState)
-            setState(unwrappedDispatchable, updateSubscribers);
+        if (shouldUpdateState) {
+            setState(unwrappedDispatchable, function () { updateSubscribers(unwrappedDispatchable); });
+        }
     };
     return {
         dispatch: dispatch,
