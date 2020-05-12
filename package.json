@@ -1,6 +1,6 @@
 {
   "name": "@iotes/core",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "description": "An IOT adaptor for JavaScript",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
