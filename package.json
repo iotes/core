@@ -1,13 +1,13 @@
 {
-  "name": "iotes",
+  "name": "@iotes/core",
   "version": "0.1.31",
-  "description": "A javascript library for intergrating iot services with modern front end state management tools",
+  "description": "An IOT adaptor for JavaScript",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
+  "repository": "https://github.com/iotes/core",
   "scripts": {
     "start": "npm run watch",
-    "build": "npm run lint && npm run test && tsc && echo Build Succeeded",
-    "dirty-build": "tsc",
+    "build": "tsc",
     "lint": "eslint ./src/**/*.ts",
     "test": "jest ./__tests__/*.test.ts",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
@@ -15,15 +15,17 @@
     "watch-node": "nodemon dist/run.js",
     "release": "bash release.sh"
   },
-  "author": "seamusfoley ",
+  "author": "seamusfoley",
   "license": "MIT",
+  "files": [
+    "build/**/*"
+  ],
   "peerDependencies": {},
   "devDependencies": {
     "@types/jest": "^25.1.1",
     "@types/node": "^13.7.0",
     "@typescript-eslint/eslint-plugin": "^2.19.0",
     "@typescript-eslint/parser": "^2.19.0",
-    "aedes": "^0.40.1",
     "concurrently": "^5.1.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
