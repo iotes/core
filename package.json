@@ -2,9 +2,10 @@
   "name": "@iotes/core",
   "version": "0.1.33",
   "description": "An IOT adaptor for JavaScript",
-  "main": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "main": "build/index.js",
+  "types": "build/types/index.d.ts",
   "repository": "https://github.com/iotes/core",
+  "homepage": "https://iotes.dev",
   "scripts": {
     "start": "npm run watch",
     "build": "tsc",
@@ -22,18 +23,18 @@
   ],
   "peerDependencies": {},
   "devDependencies": {
-    "@types/jest": "^25.1.1",
-    "@types/node": "^13.7.0",
-    "@typescript-eslint/eslint-plugin": "^2.19.0",
-    "@typescript-eslint/parser": "^2.19.0",
-    "concurrently": "^5.1.0",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.5",
+    "@typescript-eslint/eslint-plugin": "^2.32.0",
+    "@typescript-eslint/parser": "^2.32.0",
+    "concurrently": "^5.2.0",
     "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-jest": "^23.6.0",
-    "jest": "^25.1.0",
-    "ts-jest": "^25.2.0",
-    "typescript": "^3.7.5",
-    "websocket-stream": "^5.5.0"
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.10.0",
+    "jest": "^25.5.4",
+    "ts-jest": "^25.5.1",
+    "typescript": "^3.8.3",
+    "websocket-stream": "^5.5.2"
   }
 }

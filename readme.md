@@ -4,7 +4,7 @@
 
 ![npm (scoped)](https://img.shields.io/npm/v/@iotes/core)
 ![NPM](https://img.shields.io/npm/l/@iotes/core)
-![GitHub Workflow Status (master)](https://img.shields.io/github/workflow/status/iotes/strategy-mqtt/release/master)
+[![GitHub Workflow Status (master)](https://img.shields.io/github/workflow/status/iotes/core/release/master)](https://img.shields.io/github/workflow/status/iotes/core/release/master)
 
 ## Table of Contents
 - [iotes](#iotes)
