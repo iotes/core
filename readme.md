@@ -2,9 +2,9 @@
 
 **A javascript library for intergrating iot services with modern front end state management tools** 
 
-[![npm version](https://badge.fury.io/js/iotes.svg)](https://badge.fury.io/js/iotes)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/seamusfoley/iotes/master/LICENSE)
-![Build](https://github.com/seamusfoley/iotes/workflows/iotes-npm-deploy/badge.svg?branch=master)
+![npm (scoped)](https://img.shields.io/npm/v/@iotes/core)
+![NPM](https://img.shields.io/npm/l/@iotes/core)
+![GitHub Workflow Status (master)](https://img.shields.io/github/workflow/status/iotes/strategy-mqtt/release/master)
 
 ## Table of Contents
 - [iotes](#iotes)
