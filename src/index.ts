@@ -9,12 +9,15 @@ import {
     CreateIotes,
     DeviceDispatchable,
     HostDispatchable,
+    Dispatchable,
+    Direction,
 } from './types'
 
 import {
     createDeviceDispatchable,
     createHostDispatchable,
     insertMetadata,
+    mapDispatchable,
 } from './utils'
 
 const createIotes: CreateIotes = ({
@@ -37,10 +40,16 @@ const createIotes: CreateIotes = ({
 
     const { host$, device$ } = EnvironmentObject.stores
 
+    const createDirectionalDispatch = (
+        dispatch: (e: any) => void, direction: Direction,
+    ) => (dispatchable: Dispatchable) => (
+        dispatch(mapDispatchable(dispatchable, (e) => ({ ...e, '@@iotes_direction': direction })))
+    )
+
     try {
         createIntegration(strategy({
-            hostDispatch: host$.dispatch,
-            deviceDispatch: device$.dispatch,
+            hostDispatch: createDirectionalDispatch(host$.dispatch, 'I'),
+            deviceDispatch: createDirectionalDispatch(device$.dispatch, 'I'),
             hostSubscribe: host$.subscribe,
             deviceSubscribe: device$.subscribe,
         }), topology)
@@ -57,15 +66,15 @@ const createIotes: CreateIotes = ({
         // wrap dispatch with source value
         hostDispatch: (dispatchable: HostDispatchable) => {
             env.logger.info(`Host dispatch recieved ${dispatchable}`)
-            const hostDispatchable = insertMetadata(dispatchable, { '@@busChannel': 'HOST' })
-            host$.dispatch(hostDispatchable)
+            const hostDispatchable = insertMetadata(dispatchable, { busChannel: 'HOST' })
+            createDirectionalDispatch(host$.dispatch, 'O')(hostDispatchable)
         },
         deviceDispatch: <Payload extends {[key: string] : any}>(
             dispatchable: DeviceDispatchable<Payload>,
         ) => {
             env.logger.info(`Device dispatch recieved ${JSON.stringify(dispatchable, null, 2)}`)
-            const deviceDispatchable = insertMetadata(dispatchable, { '@@busChannel': 'DEVICE' })
-            device$.dispatch(deviceDispatchable)
+            const deviceDispatchable = insertMetadata(dispatchable, { busChannel: 'DEVICE' })
+            createDirectionalDispatch(device$.dispatch, 'O')(deviceDispatchable)
         },
     })
 }

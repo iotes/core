@@ -64,9 +64,11 @@ export type ClientConfig = {
 }
 
 // Store
-export type Metadata<Meta extends {[key: string]: string | number | boolean} = {
+export type Metadata<Meta extends {
+  [key: string]: string | number | boolean | {[key: string]: boolean}
+} = {
   '@@iotes_timestamp': string,
-  '@@iotes_storeId': string,
+  '@@iotes_storeId': {[key: string]: boolean},
 }> = () => Meta
 
 
@@ -94,7 +96,7 @@ export interface Logger {
 export type LogLevel = 'SILENT' | 'INFO' | 'LOG' | 'WARN' | 'DEBUG' | 'ERROR'
 
 // Dispatchables
-export type State = { [key: string]: {[key: string] : unknown } }
+export type State = { [key: string]: {[key: string] : any } }
 
 export type Dispatchable = State | Error
 
@@ -219,6 +221,8 @@ export type LoopbackGuard = (
     dispatchable: State,
     callback: (...args: any[]) => void
 ) => void
+
+export type Direction = 'I' | 'O' | 'B'
 
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable

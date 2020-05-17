@@ -223,7 +223,8 @@ describe('Strategy implementation ', () => {
 
         localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', { signal: 'test' }))
 
-        expect(result[deviceName]).toHaveProperty('@@busChannel')
+        expect(result[deviceName]).toHaveProperty('@@iotes_direction')
+        expect(result[deviceName].meta).toHaveProperty('busChannel')
     })
 
     test('Selectors work as expected', async () => {

@@ -11,19 +11,38 @@ import { EnvironmentObject } from '../environment'
 
 const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
 
-const createDefaultMetadata = (): Metadata => {
-    const storeId = createStoreId()
+const createDefaultMetadata = (storeId: string): Metadata => () => ({
+    '@@iotes_timestamp': Date.now().toString(),
+    '@@iotes_storeId': { [storeId]: true },
+})
 
-    return () => ({
-        '@@iotes_timestamp': Date.now().toString(),
-        '@@iotes_storeId': storeId,
-    })
+type IotesEvents = {
+  preCreate?: ((args: any | any[]) => void), // blocks creation
+  postCreate? : ((args: any | any[]) => void),
+  preSubscribe?: ((args: any | any[]) => void),
+  postSubscribe?: (newSubscriber: Subscriber) => {},
+  preUpdate?: (dispatchable: Dispatchable) => Dispatchable,
+}
+
+type IotesHook = (args: any | any[]) => IotesEvents
+
+type IotesHooks = IotesHook[]
+
+const HookFactory = (hooks: IotesHooks) => {
+
+    // const createdHooks: IotesEvents[] = hooks.forEach((hook) => hook())
+
+    // return {
+    //  preCreates: hooks.map((e) => e.preCreate)
+    // }
 }
 
 export const createStore = (
+    hooks: IotesHooks,
     errorHandler?: (error: Error, currentState?: State) => State,
 ): Store => {
-    const metadata = createDefaultMetadata()
+    const storeId = createStoreId()
+    const metadata = createDefaultMetadata(storeId)
 
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
@@ -33,6 +52,7 @@ export const createStore = (
 
     const subscribe = (subscription: Subscription, selector?: Selector) => {
         const subscriber: Subscriber = [subscription, selector]
+        preSubscribes(subscriber)
         subscribers = [...subscribers, subscriber]
     }
 
@@ -86,12 +106,14 @@ export const createStore = (
     const unwrapDispatchable = (dispatchable: Dispatchable): [State, ShouldUpdateState] => {
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
 
-        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => (
-            dispatchable[key] ? !dispatchable[key]['@@iotes_storeId'] : false
-        )).reduce(
+        // Check if this store has previously sene dispatchable
+        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => {
+            const storesFromDispatchable = dispatchable[key]?.['@@iotes_storeId']
+            if (storesFromDispatchable && storesFromDispatchable[storeId]) return false
+            return true
+        }).reduce(
             (a, key) => ({ ...a, [key]: dispatchable[key] }), {},
         )
-
 
         if (isObjectLiteral(deltaDispatchable)) {
             const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (
