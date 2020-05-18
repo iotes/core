@@ -6,6 +6,7 @@ import {
     Subscriber,
     Subscription,
     Metadata,
+    StoreHooks,
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
@@ -16,33 +17,32 @@ const createDefaultMetadata = (storeId: string): Metadata => () => ({
     '@@iotes_storeId': { [storeId]: true },
 })
 
-type IotesEvents = {
-  preCreate?: ((args: any | any[]) => void), // blocks creation
-  postCreate? : ((args: any | any[]) => void),
-  preSubscribe?: ((args: any | any[]) => void),
-  postSubscribe?: (newSubscriber: Subscriber) => {},
-  preUpdate?: (dispatchable: Dispatchable) => Dispatchable,
+const compose = (
+    ...fns: ((...args: any[]) => any)[]
+) => (
+    state: State = {},
+) => (
+    fns.reduceRight((v, fn) => fn(v), state)
+)
+
+type StoreArgs = {
+  hooks?: StoreHooks
+  errorHandler?: (error: Error, currentState?: State) => State
 }
 
-type IotesHook = (args: any | any[]) => IotesEvents
-
-type IotesHooks = IotesHook[]
-
-const HookFactory = (hooks: IotesHooks) => {
-
-    // const createdHooks: IotesEvents[] = hooks.forEach((hook) => hook())
-
-    // return {
-    //  preCreates: hooks.map((e) => e.preCreate)
-    // }
-}
-
-export const createStore = (
-    hooks: IotesHooks,
-    errorHandler?: (error: Error, currentState?: State) => State,
-): Store => {
+export const createStore = ({
+    hooks,
+    errorHandler,
+}: StoreArgs): Store => {
     const storeId = createStoreId()
     const metadata = createDefaultMetadata(storeId)
+
+    // hooks
+    const {
+        preSubscribeHooks = [() => {}],
+        postSubscribeHooks = [(subscriber: Subscriber) => {}],
+        preUpdateHooks = [(s: State) => s],
+    } = hooks || {}
 
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
@@ -52,8 +52,9 @@ export const createStore = (
 
     const subscribe = (subscription: Subscription, selector?: Selector) => {
         const subscriber: Subscriber = [subscription, selector]
-        preSubscribes(subscriber)
+        preSubscribeHooks.forEach((preSubscribeHook) => { preSubscribeHook() })
         subscribers = [...subscribers, subscriber]
+        postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
 
     const applySelectors = (selectors: string[]) => (
@@ -76,8 +77,9 @@ export const createStore = (
             if (!shouldUpdate) return
 
             const stateSelection = selector ? applySelectors(selector) : state
-            if (Object.keys(stateSelection).length !== 0) {
-                subscription(stateSelection)
+            const hookAppliedState = compose(...preUpdateHooks)(stateSelection)
+            if (Object.keys(hookAppliedState).length !== 0) {
+                subscription(hookAppliedState)
             }
         })
     }

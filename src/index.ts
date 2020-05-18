@@ -11,6 +11,9 @@ import {
     HostDispatchable,
     Dispatchable,
     Direction,
+    IotesHooks,
+    IotesEvents,
+    IotesHook,
 } from './types'
 
 import {
@@ -20,22 +23,52 @@ import {
     mapDispatchable,
 } from './utils'
 
+const HookFactory = (hooks: IotesHooks = []) => {
+    const defaultHook: IotesEvents = {
+        preCreate: () => {},
+        postCreate: () => {},
+        preSubscribe: () => {},
+        postSubscribe: (s) => {},
+        preUpdate: (d) => d,
+    }
+
+    const createdHooks: IotesEvents[] = hooks
+        .filter((e) => e)
+        .map((hook) => ({ ...defaultHook, ...hook() }))
+
+    return {
+        preCreateHooks: createdHooks.map((e) => e.preCreate),
+        postCreateHooks: createdHooks.map((e) => e.postCreate),
+        preSubscribeHooks: createdHooks.map((e) => e.preSubscribe),
+        postSubscribeHooks: createdHooks.map((e) => e.postSubscribe),
+        preUpdateHooks: createdHooks.map((e) => e.preUpdate),
+    }
+}
+
 const createIotes: CreateIotes = ({
     topology,
     strategy,
     plugin = identityPlugin,
     logLevel,
     logger,
+    hooks,
 }): Iotes => {
     // Set up logger
     EnvironmentObject.logger = createLogger(logger, logLevel)
     const env = EnvironmentObject
 
+    // set up hooks
+    const createdHooks = HookFactory(hooks)
+    const { preCreateHooks, postCreateHooks, ...storeHooks } = createdHooks
+
+    // Run pre create hooks
+    preCreateHooks.forEach((preCreateHook) => preCreateHook())
+
     // Set up stores
     EnvironmentObject.stores = {
         ...EnvironmentObject.stores,
-        host$: createStore(),
-        device$: createStore(),
+        host$: createStore({ hooks: storeHooks }),
+        device$: createStore({ hooks: storeHooks }),
     }
 
     const { host$, device$ } = EnvironmentObject.stores
@@ -59,6 +92,9 @@ const createIotes: CreateIotes = ({
     }
 
     const { client } = topology
+
+    // Run post create hooks
+    postCreateHooks.forEach((postCreateHook) => postCreateHook())
 
     return plugin({
         hostSubscribe: host$.subscribe,

@@ -188,6 +188,7 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
     plugin?: (iotes: Iotes) => any
     logLevel?: LogLevel
     logger?: Logger
+    hooks?: IotesHooks
 }) => Iotes
 
 export type CreateHostDispatchable = <
@@ -223,6 +224,24 @@ export type LoopbackGuard = (
 ) => void
 
 export type Direction = 'I' | 'O' | 'B'
+
+export type IotesEvents = {
+  preCreate?: () => void, // must not be async
+  postCreate? : () => void,
+  preSubscribe?: () => void,
+  postSubscribe?: (newSubscriber: Subscriber) => void,
+  preUpdate?: (state: State) => State, // composes
+}
+
+export type StoreHooks = {
+  preSubscribeHooks?: (() => void)[]
+  postSubscribeHooks?: ((newSubscriber: Subscriber) => void)[]
+  preUpdateHooks?: ((dispatchable: Dispatchable) => Dispatchable)[]
+}
+
+export type IotesHook = (...args: any[]) => IotesEvents
+
+export type IotesHooks = IotesHook[]
 
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable

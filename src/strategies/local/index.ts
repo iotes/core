@@ -90,7 +90,7 @@ const createDeviceFactory = async <StrategyConfig> (
 }
 
 export const createLocalStoreAndStrategy = (): [Store, Strategy<undefined, DeviceTypes>] => {
-    const store$ = createStore()
+    const store$ = createStore({})
 
     return [
         store$,

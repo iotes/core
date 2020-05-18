@@ -41,7 +41,7 @@ afterAll(() => {
 
 describe('Store module ', () => {
     beforeEach(() => {
-        localStore = createStore()
+        localStore = createStore({})
     })
 
     afterEach(() => {
@@ -50,7 +50,7 @@ describe('Store module ', () => {
 
     test('Can create Store ', () => {
         expect(() => {
-            createStore()
+            createStore({})
         }).not.toThrowError()
         expect(localStore).toHaveProperty('subscribe')
         expect(localStore).toHaveProperty('dispatch')
@@ -129,6 +129,59 @@ describe('Store module ', () => {
         localStore.dispatch({ ...result['reader/1'], sample: 'newTest' })
 
         expect(result['reader/1'].payload).toEqual({ signal: 'test' })
+    })
+
+    test('Pre Update Hooks Functions Correctly ', () => {
+        // This strips metadata.. I dont know if thats right
+        localStore = createStore({
+            hooks: {
+                preUpdateHooks: [
+                    (s: any) => ({ hook: { payload: `second_${s.hook.payload}` } }),
+                    (_) => ({ hook: { payload: 'hook' } }),
+                ],
+            },
+        })
+
+        let result: any = null
+
+        localStore.subscribe((state) => { result = state })
+
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', { signal: 'test' }))
+
+        expect(result.hook.payload).toBe('second_hook')
+    })
+
+    test('Pre Subscribe Hooks Functions Correctly ', () => {
+        let result: any = null
+
+        localStore = createStore({
+            hooks: {
+                preSubscribeHooks: [() => { result = 'PRE' }],
+            },
+        })
+
+        localStore.subscribe((_) => {})
+
+        expect(result).toBe('PRE')
+    })
+
+    test('Post Subscribe Hooks Functions Correctly ', () => {
+        localStore = createStore({
+            hooks: {
+                postSubscribeHooks: [
+                    (newSubsciber) => {
+                        const [subscription, selection] = newSubsciber
+                        subscription({ hook: { payload: 'hook' } })
+                    },
+                ],
+            },
+        })
+
+        let result: any = null
+
+        localStore.subscribe((state) => { result = state })
+
+        expect(result.hook.payload).toBe('hook')
     })
 })
 
@@ -257,5 +310,20 @@ describe('Strategy implementation ', () => {
 
 
         expect(result[hostName].payload).toEqual({ signal })
+    })
+
+    test('Hooks arguments are accepted', async () => {
+        let result: any = null
+
+        createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+            hooks: [() => ({
+                preCreate: () => { result = 'CREATE' },
+            })],
+        })
+
+
+        expect(result).toBe('CREATE')
     })
 })
