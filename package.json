@@ -1,11 +1,12 @@
 {
   "name": "@iotes/core",
-  "version": "0.1.31",
+  "version": "0.1.34",
   "description": "An IOT adaptor for JavaScript",
   "main": "build/index.js",
   "types": "build/types/index.d.ts",
   "repository": "https://github.com/iotes/core",
   "homepage": "https://iotes.dev",
+  "private": false,
   "scripts": {
     "start": "npm run watch",
     "build": "tsc",

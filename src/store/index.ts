@@ -6,24 +6,43 @@ import {
     Subscriber,
     Subscription,
     Metadata,
+    StoreHooks,
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
 const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
 
-const createDefaultMetadata = (): Metadata => {
-    const storeId = createStoreId()
+const createDefaultMetadata = (storeId: string): Metadata => () => ({
+    '@@iotes_timestamp': Date.now().toString(),
+    '@@iotes_storeId': { [storeId]: true },
+})
 
-    return () => ({
-        '@@iotes_timestamp': Date.now().toString(),
-        '@@iotes_storeId': storeId,
-    })
+const compose = (
+    ...fns: ((...args: any[]) => any)[]
+) => (
+    state: State = {},
+) => (
+    fns.reduceRight((v, fn) => fn(v), state)
+)
+
+type StoreArgs = {
+  hooks?: StoreHooks
+  errorHandler?: (error: Error, currentState?: State) => State
 }
 
-export const createStore = (
-    errorHandler?: (error: Error, currentState?: State) => State,
-): Store => {
-    const metadata = createDefaultMetadata()
+export const createStore = ({
+    hooks,
+    errorHandler,
+}: StoreArgs): Store => {
+    const storeId = createStoreId()
+    const metadata = createDefaultMetadata(storeId)
+
+    // hooks
+    const {
+        preSubscribeHooks = [() => {}],
+        postSubscribeHooks = [(subscriber: Subscriber) => {}],
+        preUpdateHooks = [(s: State) => s],
+    } = hooks || {}
 
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
@@ -33,7 +52,9 @@ export const createStore = (
 
     const subscribe = (subscription: Subscription, selector?: Selector) => {
         const subscriber: Subscriber = [subscription, selector]
+        preSubscribeHooks.forEach((preSubscribeHook) => { preSubscribeHook() })
         subscribers = [...subscribers, subscriber]
+        postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
 
     const applySelectors = (selectors: string[]) => (
@@ -56,8 +77,9 @@ export const createStore = (
             if (!shouldUpdate) return
 
             const stateSelection = selector ? applySelectors(selector) : state
-            if (Object.keys(stateSelection).length !== 0) {
-                subscription(stateSelection)
+            const hookAppliedState = compose(...preUpdateHooks)(stateSelection)
+            if (Object.keys(hookAppliedState).length !== 0) {
+                subscription(hookAppliedState)
             }
         })
     }
@@ -86,12 +108,14 @@ export const createStore = (
     const unwrapDispatchable = (dispatchable: Dispatchable): [State, ShouldUpdateState] => {
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
 
-        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => (
-            dispatchable[key] ? !dispatchable[key]['@@iotes_storeId'] : false
-        )).reduce(
+        // Check if this store has previously sene dispatchable
+        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => {
+            const storesFromDispatchable = dispatchable[key]?.['@@iotes_storeId']
+            if (storesFromDispatchable && storesFromDispatchable[storeId]) return false
+            return true
+        }).reduce(
             (a, key) => ({ ...a, [key]: dispatchable[key] }), {},
         )
-
 
         if (isObjectLiteral(deltaDispatchable)) {
             const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (

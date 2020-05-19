@@ -64,9 +64,11 @@ export type ClientConfig = {
 }
 
 // Store
-export type Metadata<Meta extends {[key: string]: string | number | boolean} = {
+export type Metadata<Meta extends {
+  [key: string]: string | number | boolean | {[key: string]: boolean}
+} = {
   '@@iotes_timestamp': string,
-  '@@iotes_storeId': string,
+  '@@iotes_storeId': {[key: string]: boolean},
 }> = () => Meta
 
 
@@ -94,7 +96,7 @@ export interface Logger {
 export type LogLevel = 'SILENT' | 'INFO' | 'LOG' | 'WARN' | 'DEBUG' | 'ERROR'
 
 // Dispatchables
-export type State = { [key: string]: {[key: string] : unknown } }
+export type State = { [key: string]: {[key: string] : any } }
 
 export type Dispatchable = State | Error
 
@@ -186,6 +188,7 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
     plugin?: (iotes: Iotes) => any
     logLevel?: LogLevel
     logger?: Logger
+    lifecycleHooks?: IotesHooks
 }) => Iotes
 
 export type CreateHostDispatchable = <
@@ -219,6 +222,26 @@ export type LoopbackGuard = (
     dispatchable: State,
     callback: (...args: any[]) => void
 ) => void
+
+export type Direction = 'I' | 'O' | 'B'
+
+export type IotesEvents = {
+  preCreate?: () => void, // must not be async
+  postCreate? : () => void,
+  preSubscribe?: () => void,
+  postSubscribe?: (newSubscriber: Subscriber) => void,
+  preUpdate?: (state: State) => State, // composes
+}
+
+export type StoreHooks = {
+  preSubscribeHooks?: (() => void)[]
+  postSubscribeHooks?: ((newSubscriber: Subscriber) => void)[]
+  preUpdateHooks?: ((dispatchable: Dispatchable) => Dispatchable)[]
+}
+
+export type IotesHook = (...args: any[]) => IotesEvents
+
+export type IotesHooks = IotesHook[]
 
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
