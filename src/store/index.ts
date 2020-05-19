@@ -7,6 +7,7 @@ import {
     Subscription,
     Metadata,
     StoreHooks,
+    Middleware,
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
@@ -17,12 +18,23 @@ const createDefaultMetadata = (storeId: string): Metadata => () => ({
     '@@iotes_storeId': { [storeId]: true },
 })
 
+type AnyFunction = (...args: any[]) => any
+
 const compose = (
-    ...fns: ((...args: any[]) => any)[]
+    ...fns: AnyFunction[]
 ) => (
     state: State = {},
 ) => (
     fns.reduceRight((v, fn) => fn(v), state)
+)
+
+const maybe = (fn: AnyFunction | null | undefined, ...args: any[]) => {
+    if (!fn) return undefined
+    return fn(...args)
+}
+
+const maybesOf = (fns: AnyFunction[]) => (
+    fns.map((fn) => (...args: any[]) => maybe(fn, ...args))
 )
 
 type StoreArgs = {
@@ -50,8 +62,12 @@ export const createStore = ({
     let state: State = {}
     let subscribers: Subscriber[] = []
 
-    const subscribe = (subscription: Subscription, selector?: Selector) => {
-        const subscriber: Subscriber = [subscription, selector]
+    const subscribe = (
+        subscription: Subscription,
+        selector?: Selector,
+        middlewares: Middleware[] = [(s) => s],
+    ) => {
+        const subscriber: Subscriber = [subscription, selector, middlewares]
         preSubscribeHooks.forEach((preSubscribeHook) => { preSubscribeHook() })
         subscribers = [...subscribers, subscriber]
         postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
@@ -72,14 +88,15 @@ export const createStore = ({
     const updateSubscribers = (newState: State) => {
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
         subscribers.forEach((subscriber: Subscriber) => {
-            const [subscription, selector] = subscriber
+            const [subscription, selector, middlewares] = subscriber
             const shouldUpdate: boolean = selector ? !!selector.filter((s) => newState[s])[0] : true
             if (!shouldUpdate) return
 
             const stateSelection = selector ? applySelectors(selector) : state
             const hookAppliedState = compose(...preUpdateHooks)(stateSelection)
-            if (Object.keys(hookAppliedState).length !== 0) {
-                subscription(hookAppliedState)
+            const middlewareAppliedState = compose(...maybesOf(middlewares))(newState) || {}
+            if (Object.keys(middlewareAppliedState).length !== 0) {
+                subscription({ ...hookAppliedState, ...middlewareAppliedState })
             }
         })
     }

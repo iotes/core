@@ -136,11 +136,13 @@ export type Subscription = (state: State) => any
 
 export type Selector = string[]
 
-export type Subscriber = [Subscription, Selector | undefined]
+export type Middleware = (state: State) => State
 
-export interface Store {
+export type Subscriber = [Subscription, Selector | undefined, Middleware[]]
+
+export type Store = {
     dispatch: (dispatchable: Dispatchable) => void
-    subscribe: (subscription: Subscription, selector?: Selector) => void
+    subscribe: (subscription: Subscription, selector?: Selector, middleware?: Middleware[]) => void
 }
 
 // Strategy
@@ -178,8 +180,12 @@ export type Iotes = {
     deviceDispatch: <Payload extends {[key: string]: any}>(
         dispatchable: DeviceDispatchable<Payload>
     ) => void
-    hostSubscribe: (subscription: Subscription, selector?: Selector) => void
-    deviceSubscribe: (subscription: Subscription, selector?: Selector) => void
+    hostSubscribe: (
+        subscription: Subscription, selector?: Selector, middleware?: Middleware[]
+    ) => void
+    deviceSubscribe: (
+        subscription: Subscription, selector?: Selector, middleware?: Middleware[]
+    ) => void
 }
 
 export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {

@@ -189,7 +189,7 @@ describe('Store module ', () => {
 simulate devices being connected and/or disconnected */
 
 let localModule: Iotes
-describe('Strategy implementation ', () => {
+describe('Iotes core', () => {
     beforeEach(async () => {
         [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
         localModule = createIotes({
@@ -311,7 +311,9 @@ describe('Strategy implementation ', () => {
 
         expect(result[hostName].payload).toEqual({ signal })
     })
+})
 
+describe('Lifecycle Hooks ', () => {
     test('Hooks are accepted', async () => {
         let result: any = null
 
@@ -326,7 +328,7 @@ describe('Strategy implementation ', () => {
         expect(result).toBe('CREATE')
     })
 
-    test('Async hooks do not block', async () => {
+    test('Async hooks do not block', () => {
         let result: any = null
 
         const iotes = createIotes({
@@ -349,5 +351,62 @@ describe('Strategy implementation ', () => {
         expect(iotes).toHaveProperty('hostSubscribe')
         expect(iotes).toHaveProperty('deviceDispatch')
         expect(result).toEqual('POST')
+    })
+})
+
+describe('Middlewares ', () => {
+    beforeEach(async () => {
+        [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
+        localModule = createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+        })
+    })
+
+    afterEach(() => {
+        localModule = null
+    })
+
+    test('Middleware modifies dispatch', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => ({ middleware: { payload: 'MIDDLEWARE' } })],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result.middleware.payload).toEqual('MIDDLEWARE')
+    })
+
+
+    test('Subscriber does not receive on {}', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => ({})],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result).toEqual(null)
+    })
+
+    test('Subscriber does not receive on null', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => null],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result).toEqual(null)
     })
 })
