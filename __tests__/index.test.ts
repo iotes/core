@@ -312,18 +312,42 @@ describe('Strategy implementation ', () => {
         expect(result[hostName].payload).toEqual({ signal })
     })
 
-    test('Hooks arguments are accepted', async () => {
+    test('Hooks are accepted', async () => {
         let result: any = null
 
         createIotes({
             topology: testTopologoy,
             strategy: createLocalStrategy,
-            hooks: [() => ({
+            lifecycleHooks: [() => ({
                 preCreate: () => { result = 'CREATE' },
             })],
         })
 
-
         expect(result).toBe('CREATE')
+    })
+
+    test('Async hooks do not block', async () => {
+        let result: any = null
+
+        const iotes = createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+            lifecycleHooks: [
+                () => ({
+                    preCreate: () => { setTimeout(() => 100) },
+                    postCreate: () => { setTimeout(() => 100) },
+                }),
+                () => ({
+                    preCreate: () => { result = 'PRE' },
+                    postCreate: () => { result = 'POST' },
+                }),
+            ],
+        })
+
+        expect(iotes).toHaveProperty('hostSubscribe')
+        expect(iotes).toHaveProperty('deviceSubscribe')
+        expect(iotes).toHaveProperty('hostSubscribe')
+        expect(iotes).toHaveProperty('deviceDispatch')
+        expect(result).toEqual('POST')
     })
 })

@@ -13,7 +13,6 @@ import {
     Direction,
     IotesHooks,
     IotesEvents,
-    IotesHook,
 } from './types'
 
 import {
@@ -51,18 +50,21 @@ const createIotes: CreateIotes = ({
     plugin = identityPlugin,
     logLevel,
     logger,
-    hooks,
+    lifecycleHooks = [],
 }): Iotes => {
     // Set up logger
     EnvironmentObject.logger = createLogger(logger, logLevel)
     const env = EnvironmentObject
 
+
     // set up hooks
-    const createdHooks = HookFactory(hooks)
+    const createdHooks = HookFactory(lifecycleHooks)
     const { preCreateHooks, postCreateHooks, ...storeHooks } = createdHooks
 
     // Run pre create hooks
-    preCreateHooks.forEach((preCreateHook) => preCreateHook())
+    preCreateHooks.forEach((preCreateHook) => {
+        preCreateHook()
+    })
 
     // Set up stores
     EnvironmentObject.stores = {
@@ -94,7 +96,9 @@ const createIotes: CreateIotes = ({
     const { client } = topology
 
     // Run post create hooks
-    postCreateHooks.forEach((postCreateHook) => postCreateHook())
+    postCreateHooks.forEach((postCreateHook) => {
+        postCreateHook()
+    })
 
     return plugin({
         hostSubscribe: host$.subscribe,

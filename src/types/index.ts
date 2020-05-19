@@ -188,7 +188,7 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
     plugin?: (iotes: Iotes) => any
     logLevel?: LogLevel
     logger?: Logger
-    hooks?: IotesHooks
+    lifecycleHooks?: IotesHooks
 }) => Iotes
 
 export type CreateHostDispatchable = <
