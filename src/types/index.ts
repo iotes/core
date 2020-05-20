@@ -136,7 +136,7 @@ export type Subscription = (state: State) => any
 
 export type Selector = string[]
 
-export type Middleware = (state: State) => State
+export type Middleware = (dispatchable: Dispatchable) => Dispatchable
 
 export type Subscriber = [Subscription, Selector | undefined, Middleware[]]
 
@@ -233,8 +233,10 @@ export type Direction = 'I' | 'O' | 'B'
 
 export type IotesEvents = {
   preCreate?: () => void, // must not be async
-  postCreate? : () => void,
+  postCreate? : (iotes: Iotes) => void,
   preSubscribe?: () => void,
+  preMiddleware?: Middleware,
+  postMiddleware?: Middleware,
   postSubscribe?: (newSubscriber: Subscriber) => void,
   preUpdate?: (state: State) => State, // composes
 }
@@ -242,7 +244,9 @@ export type IotesEvents = {
 export type StoreHooks = {
   preSubscribeHooks?: (() => void)[]
   postSubscribeHooks?: ((newSubscriber: Subscriber) => void)[]
-  preUpdateHooks?: ((dispatchable: Dispatchable) => Dispatchable)[]
+  preMiddlewareHooks?: Middleware[],
+  postMiddlewareHooks?: Middleware[],
+  preUpdateHooks?: ((state: State) => State)[]
 }
 
 export type IotesHook = (...args: any[]) => IotesEvents

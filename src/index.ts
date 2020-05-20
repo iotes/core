@@ -27,8 +27,10 @@ const HookFactory = (hooks: IotesHooks = []) => {
         preCreate: () => {},
         postCreate: () => {},
         preSubscribe: () => {},
+        preMiddleware: (d) => d,
+        postMiddleware: (d) => d,
         postSubscribe: (s) => {},
-        preUpdate: (d) => d,
+        preUpdate: (s) => s,
     }
 
     const createdHooks: IotesEvents[] = hooks
@@ -40,6 +42,8 @@ const HookFactory = (hooks: IotesHooks = []) => {
         postCreateHooks: createdHooks.map((e) => e.postCreate),
         preSubscribeHooks: createdHooks.map((e) => e.preSubscribe),
         postSubscribeHooks: createdHooks.map((e) => e.postSubscribe),
+        preMiddleware: createdHooks.map((e) => e.preMiddleware),
+        postMiddleware: createdHooks.map((e) => e.postMiddleware),
         preUpdateHooks: createdHooks.map((e) => e.preUpdate),
     }
 }
@@ -55,7 +59,6 @@ const createIotes: CreateIotes = ({
     // Set up logger
     EnvironmentObject.logger = createLogger(logger, logLevel)
     const env = EnvironmentObject
-
 
     // set up hooks
     const createdHooks = HookFactory(lifecycleHooks)
@@ -95,12 +98,7 @@ const createIotes: CreateIotes = ({
 
     const { client } = topology
 
-    // Run post create hooks
-    postCreateHooks.forEach((postCreateHook) => {
-        postCreateHook()
-    })
-
-    return plugin({
+    const iotes = {
         hostSubscribe: host$.subscribe,
         deviceSubscribe: device$.subscribe,
         // wrap dispatch with source value
@@ -116,7 +114,14 @@ const createIotes: CreateIotes = ({
             const deviceDispatchable = insertMetadata(dispatchable, { busChannel: 'DEVICE' })
             createDirectionalDispatch(device$.dispatch, 'O')(deviceDispatchable)
         },
+    }
+
+    // Run post create hooks
+    postCreateHooks.forEach((postCreateHook) => {
+        postCreateHook(iotes)
     })
+
+    return plugin(iotes)
 }
 
 export {

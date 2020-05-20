@@ -53,6 +53,8 @@ export const createStore = ({
     const {
         preSubscribeHooks = [() => {}],
         postSubscribeHooks = [(subscriber: Subscriber) => {}],
+        preMiddlewareHooks = [(d: Dispatchable) => d],
+        postMiddlewareHooks = [(d: Dispatchable) => d],
         preUpdateHooks = [(s: State) => s],
     } = hooks || {}
 
@@ -87,6 +89,7 @@ export const createStore = ({
 
     const updateSubscribers = (newState: State) => {
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
+
         subscribers.forEach((subscriber: Subscriber) => {
             const [subscription, selector, middlewares] = subscriber
             const shouldUpdate: boolean = selector ? !!selector.filter((s) => newState[s])[0] : true
@@ -94,9 +97,24 @@ export const createStore = ({
 
             const stateSelection = selector ? applySelectors(selector) : state
             const hookAppliedState = compose(...preUpdateHooks)(stateSelection)
-            const middlewareAppliedState = compose(...maybesOf(middlewares))(newState) || {}
-            if (Object.keys(middlewareAppliedState).length !== 0) {
-                subscription({ ...hookAppliedState, ...middlewareAppliedState })
+
+            // Apply middlewares
+
+            const preMiddlewareAppliedState: State = (
+                compose(...maybesOf(preMiddlewareHooks))(newState) || {}
+            )
+
+            const middlewareAppliedState: State = (
+                compose(...maybesOf(middlewares))(preMiddlewareAppliedState) || {}
+            )
+
+            const postMiddlewareAppliedState: State = (
+                compose(...maybesOf(postMiddlewareHooks))(middlewareAppliedState) || {}
+            )
+
+            // Dipatch to subs
+            if (Object.keys(postMiddlewareAppliedState).length !== 0) {
+                subscription({ ...hookAppliedState, ...postMiddlewareAppliedState })
             }
         })
     }
