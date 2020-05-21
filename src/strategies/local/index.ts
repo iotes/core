@@ -66,10 +66,13 @@ const createDeviceFactory = async <StrategyConfig> (
 
         // resigster trasmitter
         deviceSubscribe((state: any) => {
-            const rm = state[name]
-            store.dispatch(createDeviceDispatchable(name, rm.type, rm.source, rm.payload))
+            store.dispatch({
+                [name]:
+                state[name]?.payload?.defeatLoopbackGuard
+                    ? state
+                    : defeatLoopbackGuard(name, state),
+            })
         }, [name])
-
 
         // Register listeners
         /*

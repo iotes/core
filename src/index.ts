@@ -26,7 +26,7 @@ const HookFactory = (hooks: IotesHooks = []) => {
     const defaultHook: IotesEvents = {
         preCreate: () => {},
         postCreate: () => {},
-        preSubscribe: () => {},
+        preSubscribe: (s) => s,
         preMiddleware: (d) => d,
         postMiddleware: (d) => d,
         postSubscribe: (s) => {},
@@ -35,15 +35,16 @@ const HookFactory = (hooks: IotesHooks = []) => {
 
     const createdHooks: IotesEvents[] = hooks
         .filter((e) => e)
-        .map((hook) => ({ ...defaultHook, ...hook() }))
+        .map((hook) => hook())
+        .map((hook) => ({ ...defaultHook, ...hook }))
 
     return {
         preCreateHooks: createdHooks.map((e) => e.preCreate),
         postCreateHooks: createdHooks.map((e) => e.postCreate),
         preSubscribeHooks: createdHooks.map((e) => e.preSubscribe),
         postSubscribeHooks: createdHooks.map((e) => e.postSubscribe),
-        preMiddleware: createdHooks.map((e) => e.preMiddleware),
-        postMiddleware: createdHooks.map((e) => e.postMiddleware),
+        preMiddlewareHooks: createdHooks.map((e) => e.preMiddleware),
+        postMiddlewareHooks: createdHooks.map((e) => e.postMiddleware),
         preUpdateHooks: createdHooks.map((e) => e.preUpdate),
     }
 }

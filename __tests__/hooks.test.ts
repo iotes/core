@@ -41,13 +41,14 @@ describe('History Hook', () => {
         localModule = createIotes({
             topology: testTopologoy,
             strategy: createLocalStrategy,
+            lifecycleHooks: [history],
         })
     })
 
     test('History is sent to new subs', async () => {
         let result: any = null
 
-        let i = 1
+        let i = 0
 
         while (i < 3) {
             localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
@@ -59,10 +60,42 @@ describe('History Hook', () => {
 
         await new Promise((res, rej) => setTimeout(() => { res() }, 10))
 
-        localModule.deviceSubscribe((state) => { result = state }, undefined, [direction('O')])
+        localModule.deviceSubscribe((state) => { result = state.IOTES_HISTORY_HOOK }, ['IOTES_HISTORY_HOOK'])
 
         await new Promise((res, rej) => setTimeout(() => { res() }, 10))
 
-        console.log(result)
+        const testResults = result.payload.history
+            .filter((e: any) => Object.keys(e)[0] === 'TEST')
+            .map((e: any) => e.TEST)
+
+        expect(testResults.length).toBeGreaterThan(0)
+    })
+
+    test('History records each event once', async () => {
+        let result: any = null
+
+        let i = 0
+
+        while (i < 3) {
+            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
+            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
+            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
+
+            i += 1
+        }
+
+        await new Promise((res, rej) => setTimeout(() => { res() }, 10))
+
+        localModule.deviceSubscribe((state) => { result = state.IOTES_HISTORY_HOOK }, ['IOTES_HISTORY_HOOK'])
+
+        await new Promise((res, rej) => setTimeout(() => { res() }, 10))
+
+        const testResults = result.payload.history
+            .filter((e) => Object.keys(e)[0] === 'TEST')
+            .map((e) => e.TEST)
+
+        expect(testResults[0].payload.count).toEqual(0)
+        expect(testResults[1].payload.count).toEqual(1)
+        expect(testResults[2].payload.count).toEqual(2)
     })
 })

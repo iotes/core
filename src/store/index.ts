@@ -22,11 +22,9 @@ type AnyFunction = (...args: any[]) => any
 
 const compose = (
     ...fns: AnyFunction[]
-) => (
-    state: State = {},
-) => (
-    fns.reduceRight((v, fn) => fn(v), state)
-)
+) => <T>(
+    state: T,
+) => (Array.from(fns).reduceRight((v, fn) => fn(v), state))
 
 const maybe = (fn: AnyFunction | null | undefined, ...args: any[]) => {
     if (!fn) return undefined
@@ -43,7 +41,7 @@ type StoreArgs = {
 }
 
 export const createStore = ({
-    hooks,
+    hooks = {},
     errorHandler,
 }: StoreArgs): Store => {
     const storeId = createStoreId()
@@ -51,8 +49,8 @@ export const createStore = ({
 
     // hooks
     const {
-        preSubscribeHooks = [() => {}],
-        postSubscribeHooks = [(subscriber: Subscriber) => {}],
+        preSubscribeHooks = [(subscriber: Subscriber) => subscriber],
+        postSubscribeHooks = [(_: Subscriber) => {}],
         preMiddlewareHooks = [(d: Dispatchable) => d],
         postMiddlewareHooks = [(d: Dispatchable) => d],
         preUpdateHooks = [(s: State) => s],
@@ -61,8 +59,10 @@ export const createStore = ({
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
 
+    const nullSubscriber: Subscriber = [(_: State) => {}, [], []]
+
     let state: State = {}
-    let subscribers: Subscriber[] = []
+    let subscribers: Subscriber[] = [nullSubscriber]
 
     const subscribe = (
         subscription: Subscription,
@@ -70,8 +70,8 @@ export const createStore = ({
         middlewares: Middleware[] = [(s) => s],
     ) => {
         const subscriber: Subscriber = [subscription, selector, middlewares]
-        preSubscribeHooks.forEach((preSubscribeHook) => { preSubscribeHook() })
-        subscribers = [...subscribers, subscriber]
+        const postHooksSubscriber = compose(...preSubscribeHooks)(subscriber)
+        subscribers = [...subscribers, postHooksSubscriber]
         postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
 
@@ -87,21 +87,21 @@ export const createStore = ({
         {})
     )
 
-    const updateSubscribers = (newState: State) => {
+    const updateSubscribers = (dispatchable: State) => {
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
+
+        const preUpdateAppliedState = (
+            compose(...maybesOf(preUpdateHooks))(dispatchable) || {}
+        )
 
         subscribers.forEach((subscriber: Subscriber) => {
             const [subscription, selector, middlewares] = subscriber
-            const shouldUpdate: boolean = selector ? !!selector.filter((s) => newState[s])[0] : true
-            if (!shouldUpdate) return
 
             const stateSelection = selector ? applySelectors(selector) : state
-            const hookAppliedState = compose(...preUpdateHooks)(stateSelection)
 
             // Apply middlewares
-
             const preMiddlewareAppliedState: State = (
-                compose(...maybesOf(preMiddlewareHooks))(newState) || {}
+                compose(...maybesOf(preMiddlewareHooks))(preUpdateAppliedState) || {}
             )
 
             const middlewareAppliedState: State = (
@@ -109,12 +109,18 @@ export const createStore = ({
             )
 
             const postMiddlewareAppliedState: State = (
-                compose(...maybesOf(postMiddlewareHooks))(middlewareAppliedState) || {}
+                compose(...postMiddlewareHooks)(middlewareAppliedState) || {}
             )
+
+            const shouldUpdate: boolean = selector
+                ? !!selector.filter((s) => preUpdateAppliedState[s])[0]
+                : true
+            if (!shouldUpdate) return
+
 
             // Dipatch to subs
             if (Object.keys(postMiddlewareAppliedState).length !== 0) {
-                subscription({ ...hookAppliedState, ...postMiddlewareAppliedState })
+                subscription({ ...stateSelection, ...postMiddlewareAppliedState })
             }
         })
     }

@@ -27,6 +27,8 @@ const historyHook: IotesHook = (
     let status: HistoryHookStatus = 'LOCAL_ONLY'
 
     const postCreate = async (iotes: Iotes) => {
+        const { deviceDispatch } = iotes
+
         if (shouldLoadLocal && typeof window !== 'undefined') {
             let fromLocalStorage: any[]
             try {
@@ -39,7 +41,7 @@ const historyHook: IotesHook = (
             setLocalHistory([...localHistory, ...fromLocalStorage])
 
             if (localHistory.length > 0) {
-                createDeviceDispatchable('IOTES_HISTORY_HOOK', 'LOCAL_ONLY', { localHistory })
+                deviceDispatch(createDeviceDispatchable('IOTES_HISTORY_HOOK', 'LOCAL_ONLY', { localHistory }))
             }
         }
 
@@ -47,17 +49,17 @@ const historyHook: IotesHook = (
             const { data = [] } = await remoteSource()
             setHistory([...data, ...history])
             status = 'ALL'
-            createDeviceDispatchable('IOTES_HISTORY_HOOK', 'REMOTE_ONLY', { history })
+            deviceDispatch(createDeviceDispatchable('IOTES_HISTORY_HOOK', 'REMOTE_ONLY', { history }))
         }
     }
 
     const postSubscribe = (newSubscriber: Subscriber) => {
         const [subscription] = newSubscriber
+
         subscription(createDeviceDispatchable('IOTES_HISTORY_HOOK', status, { history }))
     }
 
-    const postMiddleware = (dispatchable: Dispatchable) => {
-        console.log('dispatchable', dispatchable)
+    const preUpdate = (dispatchable: Dispatchable) => {
         setLocalHistory([...localHistory, dispatchable])
         setHistory([...history, dispatchable])
         return dispatchable
@@ -66,7 +68,7 @@ const historyHook: IotesHook = (
     return {
         postCreate,
         postSubscribe,
-        postMiddleware,
+        preUpdate,
     }
 }
 

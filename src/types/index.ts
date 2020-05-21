@@ -234,19 +234,19 @@ export type Direction = 'I' | 'O' | 'B'
 export type IotesEvents = {
   preCreate?: () => void, // must not be async
   postCreate? : (iotes: Iotes) => void,
-  preSubscribe?: () => void,
-  preMiddleware?: Middleware,
-  postMiddleware?: Middleware,
+  preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
   postSubscribe?: (newSubscriber: Subscriber) => void,
-  preUpdate?: (state: State) => State, // composes
+  preUpdate?: Middleware, // composes
+  preMiddleware?: Middleware, // composes
+  postMiddleware?: Middleware, // composes
 }
 
 export type StoreHooks = {
-  preSubscribeHooks?: (() => void)[]
-  postSubscribeHooks?: ((newSubscriber: Subscriber) => void)[]
+  preSubscribeHooks?: ((s: Subscriber) => Subscriber)[]
+  postSubscribeHooks?: ((s: Subscriber) => void)[]
   preMiddlewareHooks?: Middleware[],
   postMiddlewareHooks?: Middleware[],
-  preUpdateHooks?: ((state: State) => State)[]
+  preUpdateHooks?: Middleware[]
 }
 
 export type IotesHook = (...args: any[]) => IotesEvents
