@@ -13,6 +13,7 @@ import {
     Direction,
     IotesHooks,
     IotesEvents,
+    StoreHook,
 } from './types'
 
 import {
@@ -23,9 +24,12 @@ import {
 } from './utils'
 
 const HookFactory = (hooks: IotesHooks = []) => {
-    const defaultHook: IotesEvents = {
+    const defaultHook: Omit<IotesEvents, 'host' | 'device'> = {
         preCreate: () => {},
         postCreate: () => {},
+    }
+
+    const defaultStoreHook: StoreHook = {
         preSubscribe: (s) => s,
         preMiddleware: (d) => d,
         postMiddleware: (d) => d,
@@ -33,19 +37,35 @@ const HookFactory = (hooks: IotesHooks = []) => {
         preUpdate: (s) => s,
     }
 
+
     const createdHooks: IotesEvents[] = hooks
         .filter((e) => e)
+        .filter((e) => typeof e === 'function')
         .map((hook) => hook())
-        .map((hook) => ({ ...defaultHook, ...hook }))
+        .map((hook) => ({
+            ...defaultHook,
+            ...hook,
+            host: { ...defaultStoreHook, ...hook.host },
+            device: { ...defaultStoreHook, ...hook.device },
+        }))
 
     return {
         preCreateHooks: createdHooks.map((e) => e.preCreate),
         postCreateHooks: createdHooks.map((e) => e.postCreate),
-        preSubscribeHooks: createdHooks.map((e) => e.preSubscribe),
-        postSubscribeHooks: createdHooks.map((e) => e.postSubscribe),
-        preMiddlewareHooks: createdHooks.map((e) => e.preMiddleware),
-        postMiddlewareHooks: createdHooks.map((e) => e.postMiddleware),
-        preUpdateHooks: createdHooks.map((e) => e.preUpdate),
+        hostHooks: {
+            preSubscribeHooks: createdHooks.map((e) => e.host.preSubscribe),
+            postSubscribeHooks: createdHooks.map((e) => e.host.postSubscribe),
+            preMiddlewareHooks: createdHooks.map((e) => e.host.preMiddleware),
+            postMiddlewareHooks: createdHooks.map((e) => e.host.postMiddleware),
+            preUpdateHooks: createdHooks.map((e) => e.host.preUpdate),
+        },
+        deviceHooks: {
+            preSubscribeHooks: createdHooks.map((e) => e.device.preSubscribe),
+            postSubscribeHooks: createdHooks.map((e) => e.device.postSubscribe),
+            preMiddlewareHooks: createdHooks.map((e) => e.device.preMiddleware),
+            postMiddlewareHooks: createdHooks.map((e) => e.device.postMiddleware),
+            preUpdateHooks: createdHooks.map((e) => e.device.preUpdate),
+        },
     }
 }
 
@@ -63,7 +83,9 @@ const createIotes: CreateIotes = ({
 
     // set up hooks
     const createdHooks = HookFactory(lifecycleHooks)
-    const { preCreateHooks, postCreateHooks, ...storeHooks } = createdHooks
+    const {
+        preCreateHooks, postCreateHooks, deviceHooks, hostHooks,
+    } = createdHooks
 
     // Run pre create hooks
     preCreateHooks.forEach((preCreateHook) => {
@@ -73,8 +95,8 @@ const createIotes: CreateIotes = ({
     // Set up stores
     EnvironmentObject.stores = {
         ...EnvironmentObject.stores,
-        host$: createStore({ hooks: storeHooks }),
-        device$: createStore({ hooks: storeHooks }),
+        host$: createStore({ channel: 'HOST', hooks: hostHooks }),
+        device$: createStore({ channel: 'DEVICE', hooks: deviceHooks }),
     }
 
     const { host$, device$ } = EnvironmentObject.stores
@@ -105,15 +127,13 @@ const createIotes: CreateIotes = ({
         // wrap dispatch with source value
         hostDispatch: (dispatchable: HostDispatchable) => {
             env.logger.info(`Host dispatch recieved ${dispatchable}`)
-            const hostDispatchable = insertMetadata(dispatchable, { busChannel: 'HOST' })
-            createDirectionalDispatch(host$.dispatch, 'O')(hostDispatchable)
+            createDirectionalDispatch(host$.dispatch, 'O')(dispatchable)
         },
         deviceDispatch: <Payload extends {[key: string] : any}>(
             dispatchable: DeviceDispatchable<Payload>,
         ) => {
             env.logger.info(`Device dispatch recieved ${JSON.stringify(dispatchable, null, 2)}`)
-            const deviceDispatchable = insertMetadata(dispatchable, { busChannel: 'DEVICE' })
-            createDirectionalDispatch(device$.dispatch, 'O')(deviceDispatchable)
+            createDirectionalDispatch(device$.dispatch, 'O')(dispatchable)
         },
     }
 

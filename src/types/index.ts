@@ -231,14 +231,19 @@ export type LoopbackGuard = (
 
 export type Direction = 'I' | 'O' | 'B'
 
+export type StoreHook = {
+    preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
+    postSubscribe?: (newSubscriber: Subscriber) => void,
+    preUpdate?: Middleware, // composes
+    preMiddleware?: Middleware, // composes
+    postMiddleware?: Middleware, // composes
+}
+
 export type IotesEvents = {
   preCreate?: () => void, // must not be async
   postCreate? : (iotes: Iotes) => void,
-  preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
-  postSubscribe?: (newSubscriber: Subscriber) => void,
-  preUpdate?: Middleware, // composes
-  preMiddleware?: Middleware, // composes
-  postMiddleware?: Middleware, // composes
+  host?: StoreHook
+  device?: StoreHook,
 }
 
 export type StoreHooks = {
@@ -249,7 +254,9 @@ export type StoreHooks = {
   preUpdateHooks?: Middleware[]
 }
 
-export type IotesHook = (...args: any[]) => IotesEvents
+export type IotesHook = () => IotesEvents
+
+export type CreateIotesHook<T extends Array<any>> = (...args: T) => IotesHook
 
 export type IotesHooks = IotesHook[]
 

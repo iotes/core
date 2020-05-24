@@ -1,15 +1,20 @@
 import {
-    IotesHook, Subscriber, IotesEvents, Iotes, Dispatchable,
+    CreateIotesHook, IotesHook, Subscriber, IotesEvents, Iotes, Dispatchable,
 } from '../types'
 
 import { createDeviceDispatchable } from '../index'
 
 type HistoryHookStatus = 'LOCAL_ONLY' | 'REMOTE_ONLY' | 'ALL'
 
-const historyHook: IotesHook = (
-    remoteSource?: () => Promise<{data: any[], etag: string}>,
-    shouldLoadLocal: boolean = false,
-): IotesEvents => {
+type HistoryHookArgs = [
+    (() => Promise<any[]>)?,
+    boolean?
+]
+
+const historyHook: CreateIotesHook<HistoryHookArgs> = (
+    remoteSource = async () => [],
+    shouldLoadLocal = false,
+): IotesHook => (): IotesEvents => {
     let history: any[] = []
     let localHistory: any[] = []
 
@@ -46,10 +51,12 @@ const historyHook: IotesHook = (
         }
 
         if (remoteSource) {
-            const { data = [] } = await remoteSource()
-            setHistory([...data, ...history])
-            status = 'ALL'
-            deviceDispatch(createDeviceDispatchable('IOTES_HISTORY_HOOK', 'REMOTE_ONLY', { history }))
+            const data = await remoteSource()
+            if (data[0]) {
+                setHistory([...data, ...history])
+                status = 'ALL'
+                deviceDispatch(createDeviceDispatchable('IOTES_HISTORY_HOOK', 'REMOTE_ONLY', { history }))
+            }
         }
     }
 
@@ -67,9 +74,15 @@ const historyHook: IotesHook = (
 
     return {
         postCreate,
-        postSubscribe,
-        preUpdate,
+        device: {
+            postSubscribe,
+            preUpdate,
+        },
+        host: {
+            postSubscribe,
+            preUpdate,
+        },
     }
 }
 
-export const history = historyHook
+export const createHistory = historyHook

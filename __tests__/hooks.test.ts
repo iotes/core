@@ -3,9 +3,7 @@ import {
 } from '../src/types'
 import { createIotes, createDeviceDispatchable } from '../src'
 import { createLocalStoreAndStrategy } from '../src/strategies/local'
-import { history } from '../src/hooks'
-import { createStore } from '../src/store'
-import { direction, debounce } from '../src/middlewares'
+import { createHistory } from '../src/hooks'
 
 // Test data
 
@@ -41,7 +39,7 @@ describe('History Hook', () => {
         localModule = createIotes({
             topology: testTopologoy,
             strategy: createLocalStrategy,
-            lifecycleHooks: [history],
+            lifecycleHooks: [createHistory()],
         })
     })
 
@@ -51,8 +49,6 @@ describe('History Hook', () => {
         let i = 0
 
         while (i < 3) {
-            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
-            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
             localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
 
             i += 1
@@ -78,17 +74,48 @@ describe('History Hook', () => {
 
         while (i < 3) {
             localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
-            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
-            localModule.deviceDispatch(createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
 
             i += 1
         }
 
-        await new Promise((res, rej) => setTimeout(() => { res() }, 10))
+        await new Promise((res, _) => setTimeout(() => { res() }, 10))
 
         localModule.deviceSubscribe((state) => { result = state.IOTES_HISTORY_HOOK }, ['IOTES_HISTORY_HOOK'])
 
-        await new Promise((res, rej) => setTimeout(() => { res() }, 10))
+        await new Promise((res, _) => setTimeout(() => { res() }, 10))
+
+        const testResults = result.payload.history
+            .filter((e) => Object.keys(e)[0] === 'TEST')
+            .map((e) => e.TEST)
+
+        expect(testResults[0].payload.count).toEqual(0)
+        expect(testResults[1].payload.count).toEqual(1)
+        expect(testResults[2].payload.count).toEqual(2)
+    })
+
+    test('History loads remote function', async () => {
+        let result: any = null
+
+        const getRemote = async () => {
+            const dataEmpty: any[] = [null, null, null]
+            const data = dataEmpty.map((e, i) => createDeviceDispatchable('TEST', 'UPDATE', { count: i }))
+            await new Promise((res, _) => setTimeout(() => { res() }, 20))
+            return data
+        }
+
+        const iotes = createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+            lifecycleHooks: [createHistory(getRemote)],
+        })
+
+        await new Promise((res, _) => setTimeout(() => { res() }, 30))
+
+        iotes.deviceSubscribe((state) => { result = state.IOTES_HISTORY_HOOK }, ['IOTES_HISTORY_HOOK'])
+
+        await new Promise((res, _) => setTimeout(() => { res() }, 10))
+
+        console.log(result.payload.history)
 
         const testResults = result.payload.history
             .filter((e) => Object.keys(e)[0] === 'TEST')

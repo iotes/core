@@ -13,9 +13,10 @@ import { EnvironmentObject } from '../environment'
 
 const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
 
-const createDefaultMetadata = (storeId: string): Metadata => () => ({
+const createDefaultMetadata = (storeId: string, channel: string): Metadata => () => ({
     '@@iotes_timestamp': Date.now().toString(),
     '@@iotes_storeId': { [storeId]: true },
+    '@@iotes_channel': channel,
 })
 
 type AnyFunction = (...args: any[]) => any
@@ -26,8 +27,9 @@ const compose = (
     state: T,
 ) => (Array.from(fns).reduceRight((v, fn) => fn(v), state))
 
-const maybe = (fn: AnyFunction | null | undefined, ...args: any[]) => {
-    if (!fn) return undefined
+const maybe = (fn: AnyFunction | undefined | null, ...args: any[]) => {
+    if (typeof fn !== 'function') return undefined
+
     return fn(...args)
 }
 
@@ -36,16 +38,18 @@ const maybesOf = (fns: AnyFunction[]) => (
 )
 
 type StoreArgs = {
+  channel: string,
   hooks?: StoreHooks
   errorHandler?: (error: Error, currentState?: State) => State
 }
 
 export const createStore = ({
+    channel,
     hooks = {},
     errorHandler,
 }: StoreArgs): Store => {
     const storeId = createStoreId()
-    const metadata = createDefaultMetadata(storeId)
+    const metadata = createDefaultMetadata(storeId, channel)
 
     // hooks
     const {
@@ -70,7 +74,7 @@ export const createStore = ({
         middlewares: Middleware[] = [(s) => s],
     ) => {
         const subscriber: Subscriber = [subscription, selector, middlewares]
-        const postHooksSubscriber = compose(...preSubscribeHooks)(subscriber)
+        const postHooksSubscriber = compose(...maybesOf(preSubscribeHooks))(subscriber)
         subscribers = [...subscribers, postHooksSubscriber]
         postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
@@ -149,7 +153,7 @@ export const createStore = ({
     const unwrapDispatchable = (dispatchable: Dispatchable): [State, ShouldUpdateState] => {
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
 
-        // Check if this store has previously sene dispatchable
+        // Check if this store has previously seen dispatchable
         const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => {
             const storesFromDispatchable = dispatchable[key]?.['@@iotes_storeId']
             if (storesFromDispatchable && storesFromDispatchable[storeId]) return false
@@ -159,8 +163,12 @@ export const createStore = ({
         )
 
         if (isObjectLiteral(deltaDispatchable)) {
+            const dispatchableId = {
+                '@@iotes_dispatchableId': `iotes_dId_${Math.random().toString(16).substr(2, 8)}`,
+            }
+
             const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (
-                { ...a, [key]: { ...deltaDispatchable[key], ...metadata() } }
+                { ...a, [key]: { ...dispatchableId, ...deltaDispatchable[key], ...metadata() } }
             ), {})
 
             return [metaDispatchable, true]

@@ -41,7 +41,7 @@ afterAll(() => {
 
 describe('Store module ', () => {
     beforeEach(() => {
-        localStore = createStore({})
+        localStore = createStore({ channel: 'TEST' })
     })
 
     afterEach(() => {
@@ -50,7 +50,7 @@ describe('Store module ', () => {
 
     test('Can create Store ', () => {
         expect(() => {
-            createStore({})
+            createStore({ channel: 'TEST' })
         }).not.toThrowError()
         expect(localStore).toHaveProperty('subscribe')
         expect(localStore).toHaveProperty('dispatch')
@@ -134,6 +134,7 @@ describe('Store module ', () => {
     test('Pre Update Hooks Functions Correctly ', () => {
         // This strips metadata.. I dont know if thats right
         localStore = createStore({
+            channel: 'TEST',
             hooks: {
                 preUpdateHooks: [
                     (s: any) => ({ hook: { payload: `second_${s.hook.payload}` } }),
@@ -155,8 +156,12 @@ describe('Store module ', () => {
         let result: any = null
 
         localStore = createStore({
+            channel: 'TEST',
             hooks: {
-                preSubscribeHooks: [() => { result = 'PRE' }],
+                preSubscribeHooks: [(s) => {
+                    result = 'PRE'
+                    return s
+                }],
             },
         })
 
@@ -167,6 +172,7 @@ describe('Store module ', () => {
 
     test('Post Subscribe Hooks Functions Correctly ', () => {
         localStore = createStore({
+            channel: 'TEST',
             hooks: {
                 postSubscribeHooks: [
                     (newSubsciber) => {
@@ -262,7 +268,7 @@ describe('Iotes core', () => {
         expect(result[deviceName].payload).toEqual({ signal: 'test' })
     })
 
-    test('Metadata is instered correctly', async () => {
+    test('Metadata is inserted correctly', async () => {
         let result: any = {}
         const deviceName = 'READER/1'
         localStore.subscribe((state) => { result = state })
@@ -277,7 +283,8 @@ describe('Iotes core', () => {
         localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', { signal: 'test' }))
 
         expect(result[deviceName]).toHaveProperty('@@iotes_direction')
-        expect(result[deviceName].meta).toHaveProperty('busChannel')
+        expect(result[deviceName]).toHaveProperty('@@iotes_channel')
+        expect(result[deviceName]['@@iotes_channel']).toEqual('TEST')
     })
 
     test('Selectors work as expected', async () => {
