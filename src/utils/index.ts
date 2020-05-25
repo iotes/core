@@ -1,6 +1,6 @@
 import {
     DeviceDispatchable, HostDispatchable,
-    CreateDeviceDispatchable, CreateHostDispatchable,
+    CreateDeviceDispatchable, CreateHostDispatchable, Dispatchable,
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = (
@@ -29,12 +29,24 @@ export const createHostDispatchable: CreateHostDispatchable = (
     },
 })
 
+type O = {[key: string]: any}
+
+export const mapDispatchable = (dispatchable: Dispatchable, fn: (e: O) => O) => (
+    Object.entries(dispatchable).reduce((a, entry) => {
+        const [device, body] = entry
+
+        return ({
+            ...a,
+            [device]: fn(body),
+        })
+    }, {})
+)
+
 export const insertMetadata = <Payload extends { [key: string]: any }>(
     dispatchable: HostDispatchable | DeviceDispatchable<Payload>,
     meta: {[key: string]: string | number},
 ) => (
-        Object.keys(dispatchable).reduce((a, key) => ({
-            ...a,
-            [key]: { ...dispatchable[key], ...meta },
-        }), {})
+        mapDispatchable(dispatchable, ((e) => (
+            { ...e, meta: { ...e.meta, ...meta } }
+        )))
     )

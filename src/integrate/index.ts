@@ -16,20 +16,24 @@ export const createIntegration: Integration = <StrategyConfig, DeviceTypes exten
     Promise.all(
         hosts.map(async (hostConfig: HostConfig<StrategyConfig>) => {
             logger.info(`Creating host ${hostConfig.name}`)
+
             const deviceFactory = await hostFactory(hostConfig, client).catch(() => {
                 throw Error(`Failed to create Factory ${hostConfig.name})`)
             })
+
             return [hostConfig.name, deviceFactory]
         }),
     ).then((deviceFactories) => {
         const deviceFactoriesIndex: {[key: string]: any} = deviceFactories.reduce(
             (a, v:[string, any]) => ({ ...a, [v[0]]: v[1] }), {},
         )
+
         // connect device
         Promise.all(
             devices.map((device) => {
                 // Select device creation method from correct host
                 logger.info(`Creating device of type: ${device.type} on ${device.hostName}`)
+
                 return deviceFactoriesIndex[device.hostName][device.type]({ ...device, client })
                     .catch((error: any) => {
                         console.warn(`Failed to create Device ${device.name} on host ${device.hostName}, details: ${error}`)

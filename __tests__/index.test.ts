@@ -41,7 +41,7 @@ afterAll(() => {
 
 describe('Store module ', () => {
     beforeEach(() => {
-        localStore = createStore()
+        localStore = createStore({ channel: 'TEST' })
     })
 
     afterEach(() => {
@@ -50,7 +50,7 @@ describe('Store module ', () => {
 
     test('Can create Store ', () => {
         expect(() => {
-            createStore()
+            createStore({ channel: 'TEST' })
         }).not.toThrowError()
         expect(localStore).toHaveProperty('subscribe')
         expect(localStore).toHaveProperty('dispatch')
@@ -130,13 +130,72 @@ describe('Store module ', () => {
 
         expect(result['reader/1'].payload).toEqual({ signal: 'test' })
     })
+
+    test('Pre Update Hooks Functions Correctly ', () => {
+        // This strips metadata.. I dont know if thats right
+        localStore = createStore({
+            channel: 'TEST',
+            hooks: {
+                preUpdateHooks: [
+                    (s: any) => ({ hook: { payload: `second_${s.hook.payload}` } }),
+                    (_) => ({ hook: { payload: 'hook' } }),
+                ],
+            },
+        })
+
+        let result: any = null
+
+        localStore.subscribe((state) => { result = state })
+
+        localStore.dispatch(createDeviceDispatchable('reader/1', 'RFID_READER', { signal: 'test' }))
+
+        expect(result.hook.payload).toBe('second_hook')
+    })
+
+    test('Pre Subscribe Hooks Functions Correctly ', () => {
+        let result: any = null
+
+        localStore = createStore({
+            channel: 'TEST',
+            hooks: {
+                preSubscribeHooks: [(s) => {
+                    result = 'PRE'
+                    return s
+                }],
+            },
+        })
+
+        localStore.subscribe((_) => {})
+
+        expect(result).toBe('PRE')
+    })
+
+    test('Post Subscribe Hooks Functions Correctly ', () => {
+        localStore = createStore({
+            channel: 'TEST',
+            hooks: {
+                postSubscribeHooks: [
+                    (newSubsciber) => {
+                        const [subscription, selection] = newSubsciber
+                        subscription({ hook: { payload: 'hook' } })
+                    },
+                ],
+            },
+        })
+
+        let result: any = null
+
+        localStore.subscribe((state) => { result = state })
+
+        expect(result.hook.payload).toBe('hook')
+    })
 })
 
 /* Tests full strategy implementation. Uses local strategy as it Integration that uses timeouts to
 simulate devices being connected and/or disconnected */
 
 let localModule: Iotes
-describe('Strategy implementation ', () => {
+describe('Iotes core', () => {
     beforeEach(async () => {
         [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
         localModule = createIotes({
@@ -209,7 +268,7 @@ describe('Strategy implementation ', () => {
         expect(result[deviceName].payload).toEqual({ signal: 'test' })
     })
 
-    test('Metadata is instered correctly', async () => {
+    test('Metadata is inserted correctly', async () => {
         let result: any = {}
         const deviceName = 'READER/1'
         localStore.subscribe((state) => { result = state })
@@ -223,7 +282,9 @@ describe('Strategy implementation ', () => {
 
         localModule.deviceDispatch(createDeviceDispatchable(deviceName, 'TTTTT', { signal: 'test' }))
 
-        expect(result[deviceName]).toHaveProperty('@@busChannel')
+        expect(result[deviceName]).toHaveProperty('@@iotes_direction')
+        expect(result[deviceName]).toHaveProperty('@@iotes_channel')
+        expect(result[deviceName]['@@iotes_channel']).toEqual('TEST')
     })
 
     test('Selectors work as expected', async () => {
@@ -256,5 +317,103 @@ describe('Strategy implementation ', () => {
 
 
         expect(result[hostName].payload).toEqual({ signal })
+    })
+})
+
+describe('Lifecycle Hooks ', () => {
+    test('Hooks are accepted', async () => {
+        let result: any = null
+
+        createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+            lifecycleHooks: [() => ({
+                preCreate: () => { result = 'CREATE' },
+            })],
+        })
+
+        expect(result).toBe('CREATE')
+    })
+
+    test('Async hooks do not block', () => {
+        let result: any = null
+
+        const iotes = createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+            lifecycleHooks: [
+                () => ({
+                    preCreate: () => { setTimeout(() => 100) },
+                    postCreate: () => { setTimeout(() => 100) },
+                }),
+                () => ({
+                    preCreate: () => { result = 'PRE' },
+                    postCreate: () => { result = 'POST' },
+                }),
+            ],
+        })
+
+        expect(iotes).toHaveProperty('hostSubscribe')
+        expect(iotes).toHaveProperty('deviceSubscribe')
+        expect(iotes).toHaveProperty('hostSubscribe')
+        expect(iotes).toHaveProperty('deviceDispatch')
+        expect(result).toEqual('POST')
+    })
+})
+
+describe('Middlewares ', () => {
+    beforeEach(async () => {
+        [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
+        localModule = createIotes({
+            topology: testTopologoy,
+            strategy: createLocalStrategy,
+        })
+    })
+
+    afterEach(() => {
+        localModule = null
+    })
+
+    test('Middleware modifies dispatch', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => ({ middleware: { payload: 'MIDDLEWARE' } })],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result.middleware.payload).toEqual('MIDDLEWARE')
+    })
+
+
+    test('Subscriber does not receive on {}', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => ({})],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result).toEqual(null)
+    })
+
+    test('Subscriber does not receive on null', () => {
+        let result: any = null
+
+        localModule.deviceSubscribe(
+            (state) => { result = state },
+            undefined,
+            [(_) => null],
+        )
+
+        localModule.deviceDispatch(createDeviceDispatchable('NONE', 'RFID_READER', { signal: 'test' }))
+
+        expect(result).toEqual(null)
     })
 })

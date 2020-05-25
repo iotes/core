@@ -6,34 +6,77 @@ import {
     Subscriber,
     Subscription,
     Metadata,
+    StoreHooks,
+    Middleware,
 } from '../types'
 import { EnvironmentObject } from '../environment'
 
 const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
 
-const createDefaultMetadata = (): Metadata => {
-    const storeId = createStoreId()
+const createDefaultMetadata = (storeId: string, channel: string): Metadata => () => ({
+    '@@iotes_timestamp': Date.now().toString(),
+    '@@iotes_storeId': { [storeId]: true },
+    '@@iotes_channel': channel,
+})
 
-    return () => ({
-        '@@iotes_timestamp': Date.now().toString(),
-        '@@iotes_storeId': storeId,
-    })
+type AnyFunction = (...args: any[]) => any
+
+const compose = (
+    ...fns: AnyFunction[]
+) => <T>(
+    state: T,
+) => (Array.from(fns).reduceRight((v, fn) => fn(v), state))
+
+const maybe = (fn: AnyFunction | undefined | null, ...args: any[]) => {
+    if (typeof fn !== 'function') return undefined
+
+    return fn(...args)
 }
 
-export const createStore = (
-    errorHandler?: (error: Error, currentState?: State) => State,
-): Store => {
-    const metadata = createDefaultMetadata()
+const maybesOf = (fns: AnyFunction[]) => (
+    fns.map((fn) => (...args: any[]) => maybe(fn, ...args))
+)
+
+type StoreArgs = {
+  channel: string,
+  hooks?: StoreHooks
+  errorHandler?: (error: Error, currentState?: State) => State
+}
+
+export const createStore = ({
+    channel,
+    hooks = {},
+    errorHandler,
+}: StoreArgs): Store => {
+    const storeId = createStoreId()
+    const metadata = createDefaultMetadata(storeId, channel)
+
+    // hooks
+    const {
+        preSubscribeHooks = [(subscriber: Subscriber) => subscriber],
+        postSubscribeHooks = [(_: Subscriber) => {}],
+        preMiddlewareHooks = [(d: Dispatchable) => d],
+        postMiddlewareHooks = [(d: Dispatchable) => d],
+        preUpdateHooks = [(s: State) => s],
+    } = hooks || {}
 
     const { logger } = EnvironmentObject
     type ShouldUpdateState = boolean
 
-    let state: State = {}
-    let subscribers: Subscriber[] = []
+    const nullSubscriber: Subscriber = [(_: State) => {}, [], []]
 
-    const subscribe = (subscription: Subscription, selector?: Selector) => {
-        const subscriber: Subscriber = [subscription, selector]
-        subscribers = [...subscribers, subscriber]
+    let state: State = {}
+    let subscribers: Subscriber[] = [nullSubscriber]
+
+    const subscribe = (
+        subscription: Subscription,
+        selector?: Selector,
+        middlewares: Middleware[] = [(s) => s],
+    ) => {
+        const subscriber: Subscriber = [subscription, selector, middlewares]
+        const postHooksSubscriber = compose(...maybesOf(preSubscribeHooks))(subscriber)
+        subscribers = [...subscribers, postHooksSubscriber]
+        postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
 
     const applySelectors = (selectors: string[]) => (
@@ -48,16 +91,40 @@ export const createStore = (
         {})
     )
 
-    const updateSubscribers = (newState: State) => {
+    const updateSubscribers = (dispatchable: State) => {
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
+
+        const preUpdateAppliedState = (
+            compose(...maybesOf(preUpdateHooks))(dispatchable) || {}
+        )
+
         subscribers.forEach((subscriber: Subscriber) => {
-            const [subscription, selector] = subscriber
-            const shouldUpdate: boolean = selector ? !!selector.filter((s) => newState[s])[0] : true
-            if (!shouldUpdate) return
+            const [subscription, selector, middlewares] = subscriber
 
             const stateSelection = selector ? applySelectors(selector) : state
-            if (Object.keys(stateSelection).length !== 0) {
-                subscription(stateSelection)
+
+            // Apply middlewares
+            const preMiddlewareAppliedState: State = (
+                compose(...maybesOf(preMiddlewareHooks))(preUpdateAppliedState) || {}
+            )
+
+            const middlewareAppliedState: State = (
+                compose(...maybesOf(middlewares))(preMiddlewareAppliedState) || {}
+            )
+
+            const postMiddlewareAppliedState: State = (
+                compose(...postMiddlewareHooks)(middlewareAppliedState) || {}
+            )
+
+            const shouldUpdate: boolean = selector
+                ? !!selector.filter((s) => preUpdateAppliedState[s])[0]
+                : true
+            if (!shouldUpdate) return
+
+
+            // Dipatch to subs
+            if (Object.keys(postMiddlewareAppliedState).length !== 0) {
+                subscription({ ...stateSelection, ...postMiddlewareAppliedState })
             }
         })
     }
@@ -86,16 +153,22 @@ export const createStore = (
     const unwrapDispatchable = (dispatchable: Dispatchable): [State, ShouldUpdateState] => {
         if (dispatchable instanceof Error) return [errorHandler(dispatchable, state), false]
 
-        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => (
-            dispatchable[key] ? !dispatchable[key]['@@iotes_storeId'] : false
-        )).reduce(
+        // Check if this store has previously seen dispatchable
+        const deltaDispatchable: State = Object.keys(dispatchable).filter((key: string) => {
+            const storesFromDispatchable = dispatchable[key]?.['@@iotes_storeId']
+            if (storesFromDispatchable && storesFromDispatchable[storeId]) return false
+            return true
+        }).reduce(
             (a, key) => ({ ...a, [key]: dispatchable[key] }), {},
         )
 
-
         if (isObjectLiteral(deltaDispatchable)) {
+            const dispatchableId = {
+                '@@iotes_dispatchableId': `iotes_dId_${Math.random().toString(16).substr(2, 8)}`,
+            }
+
             const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (
-                { ...a, [key]: { ...deltaDispatchable[key], ...metadata() } }
+                { ...a, [key]: { ...dispatchableId, ...deltaDispatchable[key], ...metadata() } }
             ), {})
 
             return [metaDispatchable, true]

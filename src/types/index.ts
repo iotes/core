@@ -64,9 +64,11 @@ export type ClientConfig = {
 }
 
 // Store
-export type Metadata<Meta extends {[key: string]: string | number | boolean} = {
+export type Metadata<Meta extends {
+  [key: string]: string | number | boolean | {[key: string]: boolean}
+} = {
   '@@iotes_timestamp': string,
-  '@@iotes_storeId': string,
+  '@@iotes_storeId': {[key: string]: boolean},
 }> = () => Meta
 
 
@@ -94,7 +96,7 @@ export interface Logger {
 export type LogLevel = 'SILENT' | 'INFO' | 'LOG' | 'WARN' | 'DEBUG' | 'ERROR'
 
 // Dispatchables
-export type State = { [key: string]: {[key: string] : unknown } }
+export type State = { [key: string]: {[key: string] : any } }
 
 export type Dispatchable = State | Error
 
@@ -134,11 +136,13 @@ export type Subscription = (state: State) => any
 
 export type Selector = string[]
 
-export type Subscriber = [Subscription, Selector | undefined]
+export type Middleware = (dispatchable: Dispatchable) => Dispatchable
 
-export interface Store {
+export type Subscriber = [Subscription, Selector | undefined, Middleware[]]
+
+export type Store = {
     dispatch: (dispatchable: Dispatchable) => void
-    subscribe: (subscription: Subscription, selector?: Selector) => void
+    subscribe: (subscription: Subscription, selector?: Selector, middleware?: Middleware[]) => void
 }
 
 // Strategy
@@ -176,8 +180,12 @@ export type Iotes = {
     deviceDispatch: <Payload extends {[key: string]: any}>(
         dispatchable: DeviceDispatchable<Payload>
     ) => void
-    hostSubscribe: (subscription: Subscription, selector?: Selector) => void
-    deviceSubscribe: (subscription: Subscription, selector?: Selector) => void
+    hostSubscribe: (
+        subscription: Subscription, selector?: Selector, middleware?: Middleware[]
+    ) => void
+    deviceSubscribe: (
+        subscription: Subscription, selector?: Selector, middleware?: Middleware[]
+    ) => void
 }
 
 export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
@@ -186,6 +194,7 @@ export type CreateIotes = <StrategyConfig, DeviceTypes extends string>(config: {
     plugin?: (iotes: Iotes) => any
     logLevel?: LogLevel
     logger?: Logger
+    lifecycleHooks?: IotesHooks
 }) => Iotes
 
 export type CreateHostDispatchable = <
@@ -219,6 +228,40 @@ export type LoopbackGuard = (
     dispatchable: State,
     callback: (...args: any[]) => void
 ) => void
+
+
+export type Direction = 'I' | 'O' | 'B'
+
+// Middlewares and Hooks
+
+export type StoreHook = {
+    preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
+    postSubscribe?: (newSubscriber: Subscriber) => void,
+    preUpdate?: Middleware, // composes
+    preMiddleware?: Middleware, // composes
+    postMiddleware?: Middleware, // composes
+}
+
+export type IotesEvents = {
+  preCreate?: () => void, // must not be async
+  postCreate? : (iotes: Iotes) => void,
+  host?: StoreHook
+  device?: StoreHook,
+}
+
+export type StoreHooks = {
+  preSubscribeHooks?: ((s: Subscriber) => Subscriber)[]
+  postSubscribeHooks?: ((s: Subscriber) => void)[]
+  preMiddlewareHooks?: Middleware[],
+  postMiddlewareHooks?: Middleware[],
+  preUpdateHooks?: Middleware[]
+}
+
+export type IotesHook = () => IotesEvents
+
+export type CreateIotesHook<T extends Array<any>> = (...args: T) => IotesHook
+
+export type IotesHooks = IotesHook[]
 
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
