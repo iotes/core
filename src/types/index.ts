@@ -229,7 +229,10 @@ export type LoopbackGuard = (
     callback: (...args: any[]) => void
 ) => void
 
+
 export type Direction = 'I' | 'O' | 'B'
+
+// Middlewares and Hooks
 
 export type StoreHook = {
     preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
