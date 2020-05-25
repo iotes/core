@@ -21,10 +21,10 @@ jobs:
           node-version: 12
       - run: npm ci
       - run: npm run build
-      #- name: "Automated Version Bump"
-      #  uses: "phips28/gh-action-bump-version@master"
-      #  with:
-      #    tag-prefix: ''
+      - name: "Automated Version Bump"
+        uses: "phips28/gh-action-bump-version@master"
+        with:
+          tag-prefix: ''
       - name: "cat package.json"
         run: cat ./package.json
       - name: upload build artifacts
