@@ -19,7 +19,6 @@ import {
 import {
     createDeviceDispatchable,
     createHostDispatchable,
-    insertMetadata,
     mapDispatchable,
 } from './utils'
 
