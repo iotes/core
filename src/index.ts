@@ -37,7 +37,6 @@ const HookFactory = (hooks: IotesHooks = []) => {
         preUpdate: (s) => s,
     }
 
-
     const createdHooks: IotesEvents[] = hooks
         .filter((e) => e)
         .filter((e) => typeof e === 'function')
