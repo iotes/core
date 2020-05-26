@@ -129,8 +129,6 @@ const createIotes: CreateIotes = ({
         throw Error('Failed to create Integration for unknown reasons. Did you pass the result of a function call instead of a function?')
     }
 
-    const { client } = topology
-
     const iotes = {
         hostSubscribe: host$.subscribe,
         deviceSubscribe: device$.subscribe,
