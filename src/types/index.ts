@@ -160,7 +160,8 @@ export type TopologyMap<StrategyConfig, DeviceTypes extends string> = {
 }
 
 export type Strategy<StrategyConfig, DeviceTypes extends string> = (
-  Iotes: Iotes
+  Iotes: Iotes,
+  StrategyHooks: StrategyHooks
 ) => HostFactory<StrategyConfig, DeviceTypes>
 // Iotes
 
@@ -237,16 +238,30 @@ export type Direction = 'I' | 'O' | 'B'
 export type StoreHook = {
     preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
     postSubscribe?: (newSubscriber: Subscriber) => void,
-    preUpdate?: Middleware, // composes
-    preMiddleware?: Middleware, // composes
-    postMiddleware?: Middleware, // composes
+    preUpdate?: Middleware, // pipes
+    preMiddleware?: Middleware, // pipes
+    postMiddleware?: Middleware, // pipes
 }
+
+export type StrategyHook = {
+    preDispatch?: Middleware,
+}
+
 
 export type IotesEvents = {
   preCreate?: () => void, // must not be async
   postCreate? : (iotes: Iotes) => void,
-  host?: StoreHook
-  device?: StoreHook,
+  host?: StoreHook & StrategyHook
+  device?: StoreHook & StrategyHook,
+}
+
+export type StrategyHooks = {
+  host: {
+    preDispatchHooks: Middleware[]
+  },
+  device: {
+    preDispatchHooks: Middleware[]
+  }
 }
 
 export type StoreHooks = {
