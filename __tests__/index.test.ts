@@ -137,8 +137,8 @@ describe('Store module ', () => {
             channel: 'TEST',
             hooks: {
                 preUpdateHooks: [
+                    () => ({ hook: { payload: 'hook' } }),
                     (s: any) => ({ hook: { payload: `second_${s.hook.payload}` } }),
-                    (_) => ({ hook: { payload: 'hook' } }),
                 ],
             },
         })

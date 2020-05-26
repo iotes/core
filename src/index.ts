@@ -20,7 +20,7 @@ import {
 import {
     createDeviceDispatchable,
     createHostDispatchable,
-    insertMetadata,
+    maybePipe,
     mapDispatchable,
 } from './utils'
 
@@ -157,4 +157,6 @@ export {
     createIotes,
     createDeviceDispatchable,
     createHostDispatchable,
+    maybePipe,
+    mapDispatchable,
 }

@@ -115,8 +115,6 @@ describe('History Hook', () => {
 
         await new Promise((res, _) => setTimeout(() => { res() }, 10))
 
-        console.log(result.payload.history)
-
         const testResults = result.payload.history
             .filter((e) => Object.keys(e)[0] === 'TEST')
             .map((e) => e.TEST)

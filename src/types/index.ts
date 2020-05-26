@@ -230,8 +230,15 @@ export type LoopbackGuard = (
     callback: (...args: any[]) => void
 ) => void
 
-
 export type Direction = 'I' | 'O' | 'B'
+
+export type AnyFunction = (...args: any[]) => any
+
+export type StoreArgs = {
+  channel: string,
+  hooks?: StoreHooks
+  errorHandler?: (error: Error, currentState?: State) => State
+}
 
 // Middlewares and Hooks
 
@@ -281,7 +288,18 @@ export type IotesHooks = IotesHook[]
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
+declare const pipe: Pipe
+declare const maybePipe: MaybePipe
+
+// utils
+
+export type Pipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+export type MaybePipe = (...fns: AnyFunction[]) => <T>(state: T) => any
 
 export {
-    createIotes, createDeviceDispatchable, createHostDispatchable,
+    createIotes,
+    createDeviceDispatchable,
+    createHostDispatchable,
+    pipe,
+    maybePipe,
 }

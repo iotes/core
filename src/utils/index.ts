@@ -1,6 +1,12 @@
 import {
-    DeviceDispatchable, HostDispatchable,
-    CreateDeviceDispatchable, CreateHostDispatchable, Dispatchable,
+    DeviceDispatchable,
+    HostDispatchable,
+    CreateDeviceDispatchable,
+    CreateHostDispatchable,
+    Dispatchable,
+    AnyFunction,
+    MaybePipe,
+    Pipe,
 } from '../types'
 
 export const createDeviceDispatchable: CreateDeviceDispatchable = (
@@ -50,3 +56,21 @@ export const insertMetadata = <Payload extends { [key: string]: any }>(
             { ...e, meta: { ...e.meta, ...meta } }
         )))
     )
+
+export const pipe: Pipe = (
+    ...fns: AnyFunction[]
+) => <T>(
+    state: T,
+) => (Array.from(fns).reduce((v, fn) => fn(v), state))
+
+export const maybe = (fn: AnyFunction | undefined | null, ...args: any[]) => {
+    if (typeof fn !== 'function') return undefined
+
+    return fn(...args)
+}
+
+export const maybesOf = (fns: AnyFunction[]) => (
+    fns.map((fn) => (...args: any[]) => maybe(fn, ...args))
+)
+
+export const maybePipe: MaybePipe = (...fns: AnyFunction[]) => pipe(...maybesOf(fns))
