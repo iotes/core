@@ -153,6 +153,7 @@ const createIotes: CreateIotes = ({
     return plugin(iotes)
 }
 
+// EXPORTS
 export {
     createIotes,
     createDeviceDispatchable,

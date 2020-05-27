@@ -15,6 +15,9 @@ export type HostConfig<StrategyConfig> = {
     strategyConfig?: StrategyConfig
 }
 
+export type AnyObject<T = any> = {[key: string]: T }
+
+
 export type HostConnectionType = 'CONNECT' | 'DISCONNECT' | 'RECONNECTING' | 'DEVICE_CONNECT' | 'DEVICE_DISCONNECT'
 
 export type HostFactory<StrategyConfig, DeviceTypes extends string> = (
@@ -285,21 +288,23 @@ export type CreateIotesHook<T extends Array<any>> = (...args: T) => IotesHook
 
 export type IotesHooks = IotesHook[]
 
+// UTILS
+export type Pipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+export type MaybePipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+export type MapDispatchable = (
+  dispatchable: Dispatchable, fn: (e: AnyObject) => AnyObject
+) => Dispatchable
+
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
-declare const pipe: Pipe
 declare const maybePipe: MaybePipe
-
-// utils
-
-export type Pipe = (...fns: AnyFunction[]) => <T>(state: T) => any
-export type MaybePipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+declare const mapDispatchable: MapDispatchable
 
 export {
     createIotes,
     createDeviceDispatchable,
     createHostDispatchable,
-    pipe,
     maybePipe,
+    mapDispatchable,
 }
