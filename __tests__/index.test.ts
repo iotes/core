@@ -168,6 +168,7 @@ describe('Lifecycle Hooks ', () => {
 })
 
 describe('Middlewares ', () => {
+    // SET UP
     beforeEach(async () => {
         [remote, strategy] = createTestStrategy()
         iotes = createIotes({
@@ -180,6 +181,7 @@ describe('Middlewares ', () => {
         iotes = null
     })
 
+    // TESTS
     test('Middleware modifies dispatch', () => {
         let result: any = null
 
@@ -193,7 +195,6 @@ describe('Middlewares ', () => {
 
         expect(result.middleware.payload).toEqual('MIDDLEWARE')
     })
-
 
     test('Subscriber does not receive on {}', () => {
         let result: any = null
