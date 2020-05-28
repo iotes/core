@@ -3,7 +3,6 @@ import {
 } from '../src/types'
 import { createIotes, createDeviceDispatchable } from '../src'
 import { createLocalStoreAndStrategy } from '../src/strategies/local'
-import { createStore } from '../src/store'
 import { direction, debounce } from '../src/middlewares'
 
 // Test data
