@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# This script builds and then copies the build to @iotes/core in node_modules
+# The reason for this is that the test strategy depends of @iotes/core and needs
+# the local version
+ 
+mkdir -p node_modules/@iotes/core
+echo building core...
+tsc
+echo copying core...
+cp -f package.json node_modules/@iotes/core
+cp -rf build node_modules/@iotes/core

@@ -6,9 +6,11 @@ import {
     Subscriber,
     Subscription,
     Metadata,
-    StoreHooks,
+    StoreArgs,
     Middleware,
 } from '../types'
+import { pipe, maybesOf } from '../utils'
+
 import { EnvironmentObject } from '../environment'
 
 const createStoreId = ():string => `iotes_${Math.random().toString(16).substr(2, 8)}`
@@ -18,30 +20,6 @@ const createDefaultMetadata = (storeId: string, channel: string): Metadata => ()
     '@@iotes_storeId': { [storeId]: true },
     '@@iotes_channel': channel,
 })
-
-type AnyFunction = (...args: any[]) => any
-
-const compose = (
-    ...fns: AnyFunction[]
-) => <T>(
-    state: T,
-) => (Array.from(fns).reduceRight((v, fn) => fn(v), state))
-
-const maybe = (fn: AnyFunction | undefined | null, ...args: any[]) => {
-    if (typeof fn !== 'function') return undefined
-
-    return fn(...args)
-}
-
-const maybesOf = (fns: AnyFunction[]) => (
-    fns.map((fn) => (...args: any[]) => maybe(fn, ...args))
-)
-
-type StoreArgs = {
-  channel: string,
-  hooks?: StoreHooks
-  errorHandler?: (error: Error, currentState?: State) => State
-}
 
 export const createStore = ({
     channel,
@@ -74,7 +52,7 @@ export const createStore = ({
         middlewares: Middleware[] = [(s) => s],
     ) => {
         const subscriber: Subscriber = [subscription, selector, middlewares]
-        const postHooksSubscriber = compose(...maybesOf(preSubscribeHooks))(subscriber)
+        const postHooksSubscriber = pipe(...maybesOf(preSubscribeHooks))(subscriber)
         subscribers = [...subscribers, postHooksSubscriber]
         postSubscribeHooks.forEach((postSubscribeHook) => { postSubscribeHook(subscriber) })
     }
@@ -95,7 +73,7 @@ export const createStore = ({
         logger.log(`Subscriber to receive state: ${JSON.stringify(state, null, 2)}`)
 
         const preUpdateAppliedState = (
-            compose(...maybesOf(preUpdateHooks))(dispatchable) || {}
+            pipe(...maybesOf(preUpdateHooks))(dispatchable) || {}
         )
 
         subscribers.forEach((subscriber: Subscriber) => {
@@ -105,15 +83,15 @@ export const createStore = ({
 
             // Apply middlewares
             const preMiddlewareAppliedState: State = (
-                compose(...maybesOf(preMiddlewareHooks))(preUpdateAppliedState) || {}
+                pipe(...maybesOf(preMiddlewareHooks))(preUpdateAppliedState) || {}
             )
 
             const middlewareAppliedState: State = (
-                compose(...maybesOf(middlewares))(preMiddlewareAppliedState) || {}
+                pipe(...maybesOf(middlewares))(preMiddlewareAppliedState) || {}
             )
 
             const postMiddlewareAppliedState: State = (
-                compose(...postMiddlewareHooks)(middlewareAppliedState) || {}
+                pipe(...postMiddlewareHooks)(middlewareAppliedState) || {}
             )
 
             const shouldUpdate: boolean = selector

@@ -14,11 +14,13 @@ import {
     IotesHooks,
     IotesEvents,
     StoreHook,
+    StrategyHook,
 } from './types'
 
 import {
     createDeviceDispatchable,
     createHostDispatchable,
+    maybePipe,
     mapDispatchable,
 } from './utils'
 
@@ -28,12 +30,13 @@ const HookFactory = (hooks: IotesHooks = []) => {
         postCreate: () => {},
     }
 
-    const defaultStoreHook: StoreHook = {
+    const defaultStoreHook: StoreHook & StrategyHook = {
         preSubscribe: (s) => s,
         preMiddleware: (d) => d,
         postMiddleware: (d) => d,
-        postSubscribe: (s) => {},
+        postSubscribe: (_) => {},
         preUpdate: (s) => s,
+        preDispatch: (d) => d,
     }
 
     const createdHooks: IotesEvents[] = hooks
@@ -64,6 +67,14 @@ const HookFactory = (hooks: IotesHooks = []) => {
             postMiddlewareHooks: createdHooks.map((e) => e.device.postMiddleware),
             preUpdateHooks: createdHooks.map((e) => e.device.preUpdate),
         },
+        strategyHooks: {
+            host: {
+                preDispatchHooks: createdHooks.map((e) => e.host.preDispatch),
+            },
+            device: {
+                preDispatchHooks: createdHooks.map((e) => e.device.preDispatch),
+            },
+        },
     }
 }
 
@@ -82,7 +93,7 @@ const createIotes: CreateIotes = ({
     // set up hooks
     const createdHooks = HookFactory(lifecycleHooks)
     const {
-        preCreateHooks, postCreateHooks, deviceHooks, hostHooks,
+        preCreateHooks, postCreateHooks, deviceHooks, hostHooks, strategyHooks,
     } = createdHooks
 
     // Run pre create hooks
@@ -111,13 +122,11 @@ const createIotes: CreateIotes = ({
             deviceDispatch: createDirectionalDispatch(device$.dispatch, 'I'),
             hostSubscribe: host$.subscribe,
             deviceSubscribe: device$.subscribe,
-        }), topology)
+        }, strategyHooks), topology)
     } catch (error) {
         if (error && error.length > 0) { throw Error(error) }
         throw Error('Failed to create Integration for unknown reasons. Did you pass the result of a function call instead of a function?')
     }
-
-    const { client } = topology
 
     const iotes = {
         hostSubscribe: host$.subscribe,
@@ -143,8 +152,11 @@ const createIotes: CreateIotes = ({
     return plugin(iotes)
 }
 
+// EXPORTS
 export {
     createIotes,
     createDeviceDispatchable,
     createHostDispatchable,
+    maybePipe,
+    mapDispatchable,
 }

@@ -15,6 +15,9 @@ export type HostConfig<StrategyConfig> = {
     strategyConfig?: StrategyConfig
 }
 
+export type AnyObject<T = any> = {[key: string]: T }
+
+
 export type HostConnectionType = 'CONNECT' | 'DISCONNECT' | 'RECONNECTING' | 'DEVICE_CONNECT' | 'DEVICE_DISCONNECT'
 
 export type HostFactory<StrategyConfig, DeviceTypes extends string> = (
@@ -160,7 +163,8 @@ export type TopologyMap<StrategyConfig, DeviceTypes extends string> = {
 }
 
 export type Strategy<StrategyConfig, DeviceTypes extends string> = (
-  Iotes: Iotes
+  Iotes: Iotes,
+  StrategyHooks: StrategyHooks
 ) => HostFactory<StrategyConfig, DeviceTypes>
 // Iotes
 
@@ -229,24 +233,45 @@ export type LoopbackGuard = (
     callback: (...args: any[]) => void
 ) => void
 
-
 export type Direction = 'I' | 'O' | 'B'
+
+export type AnyFunction = (...args: any[]) => any
+
+export type StoreArgs = {
+  channel: string,
+  hooks?: StoreHooks
+  errorHandler?: (error: Error, currentState?: State) => State
+}
 
 // Middlewares and Hooks
 
 export type StoreHook = {
     preSubscribe?: (newSubscriber: Subscriber) => Subscriber,
     postSubscribe?: (newSubscriber: Subscriber) => void,
-    preUpdate?: Middleware, // composes
-    preMiddleware?: Middleware, // composes
-    postMiddleware?: Middleware, // composes
+    preUpdate?: Middleware, // pipes
+    preMiddleware?: Middleware, // pipes
+    postMiddleware?: Middleware, // pipes
 }
+
+export type StrategyHook = {
+    preDispatch?: Middleware,
+}
+
 
 export type IotesEvents = {
   preCreate?: () => void, // must not be async
   postCreate? : (iotes: Iotes) => void,
-  host?: StoreHook
-  device?: StoreHook,
+  host?: StoreHook & StrategyHook
+  device?: StoreHook & StrategyHook,
+}
+
+export type StrategyHooks = {
+  host: {
+    preDispatchHooks: Middleware[]
+  },
+  device: {
+    preDispatchHooks: Middleware[]
+  }
 }
 
 export type StoreHooks = {
@@ -263,10 +288,23 @@ export type CreateIotesHook<T extends Array<any>> = (...args: T) => IotesHook
 
 export type IotesHooks = IotesHook[]
 
+// UTILS
+export type Pipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+export type MaybePipe = (...fns: AnyFunction[]) => <T>(state: T) => any
+export type MapDispatchable = (
+  dispatchable: Dispatchable, fn: (e: AnyObject) => AnyObject
+) => Dispatchable
+
 declare const createIotes: CreateIotes
 declare const createDeviceDispatchable: CreateDeviceDispatchable
 declare const createHostDispatchable: CreateHostDispatchable
+declare const maybePipe: MaybePipe
+declare const mapDispatchable: MapDispatchable
 
 export {
-    createIotes, createDeviceDispatchable, createHostDispatchable,
+    createIotes,
+    createDeviceDispatchable,
+    createHostDispatchable,
+    maybePipe,
+    mapDispatchable,
 }
