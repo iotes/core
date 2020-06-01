@@ -145,8 +145,21 @@ export const createStore = ({
                 '@@iotes_dispatchableId': `iotes_dId_${Math.random().toString(16).substr(2, 8)}`,
             }
 
+            const mdata = metadata()
+
             const metaDispatchable = Object.keys(deltaDispatchable).reduce((a, key) => (
-                { ...a, [key]: { ...dispatchableId, ...deltaDispatchable[key], ...metadata() } }
+                {
+                    ...a,
+                    [key]: {
+                        ...dispatchableId,
+                        ...deltaDispatchable[key],
+                        ...mdata,
+                        '@@iotes_storeId': {
+                            ...deltaDispatchable[key]['@@iotes_storeId'],
+                            ...mdata['@@iotes_storeId'],
+                        },
+                    },
+                }
             ), {})
 
             return [metaDispatchable, true]
